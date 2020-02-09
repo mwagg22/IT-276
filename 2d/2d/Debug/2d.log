@@ -1,0 +1,38 @@
+﻿Build started 2/5/2020 10:48:54 AM.
+     1>Project "C:\Users\momo\Downloads\gameframework2d-master\gameframework2d-master\2d\2d\2d.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /Od /Oy- /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TC /analyze- /errorReport:prompt "..\..\..\..\gf3d-master (1)\gf3d-master\src\g_entity.c"
+         g_entity.c
+     1>..\..\..\..\gf3d-master (1)\gf3d-master\src\g_entity.c(38): warning C4113: 'void (__cdecl *)()' differs in parameter lists from 'void (__cdecl *)(void)'
+     1>..\..\..\..\gf3d-master (1)\gf3d-master\src\g_entity.c(45): warning C4018: '<' : signed/unsigned mismatch
+     1>..\..\..\..\gf3d-master (1)\gf3d-master\src\g_entity.c(84): warning C4018: '<' : signed/unsigned mismatch
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\momo\Downloads\gameframework2d-master\gameframework2d-master\2d\Debug\2d.exe" /INCREMENTAL:NO /NOLOGO SDL2_ttf.lib SDL2_mixer.lib SDL2_image.lib SDL2.lib SDL2main.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\momo\Downloads\gameframework2d-master\gameframework2d-master\2d\Debug\2d.pdb" /SUBSYSTEM:CONSOLE /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\momo\Downloads\gameframework2d-master\gameframework2d-master\2d\Debug\2d.lib" /MACHINE:X86 Debug\g_entity.obj
+         Debug\simple_json.obj
+         Debug\simple_json_array.obj
+         Debug\simple_json_error.obj
+         Debug\simple_json_list.obj
+         Debug\simple_json_object.obj
+         Debug\simple_json_parse.obj
+         Debug\simple_json_string.obj
+         Debug\simple_logger.obj
+         Debug\gfc_audio.obj
+         Debug\gfc_callbacks.obj
+         Debug\gfc_input.obj
+         Debug\gfc_list.obj
+         Debug\gfc_matrix.obj
+         Debug\gfc_text.obj
+         Debug\gfc_types.obj
+         Debug\gfc_vector.obj
+         Debug\game.obj
+         Debug\gf2d_draw.obj
+         Debug\gf2d_graphics.obj
+         Debug\gf2d_sprite.obj
+         Generating code
+         Finished generating code
+         2d.vcxproj -> C:\Users\momo\Downloads\gameframework2d-master\gameframework2d-master\2d\Debug\2d.exe
+     1>Done Building Project "C:\Users\momo\Downloads\gameframework2d-master\gameframework2d-master\2d\2d\2d.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:01.92
