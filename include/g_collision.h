@@ -2,6 +2,7 @@
 #include "g_entity.h"
 
 
+
 void collision_check(Entity *ents, Uint32 entity_max);
 bool check_collision(Entity *self, Entity *other);
 bool check_hitbox_collision(Entity *hitlist, Entity *other);
