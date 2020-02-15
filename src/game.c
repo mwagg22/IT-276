@@ -1,8 +1,9 @@
 #include <SDL.h>
 #include "gf2d_graphics.h"
 #include "gf2d_sprite.h"
-#include "g_entity.h"
+//#include "g_entity.h"
 #include "simple_logger.h"
+#include "g_gungirl.h"
 
 int main(int argc, char * argv[])
 {
@@ -12,7 +13,7 @@ int main(int argc, char * argv[])
     Sprite *sprite;
 	gf2d_entity_manager_init(20);
 	Entity *mouse = gf2d_entity_new();
-	
+	Entity *player = gf2d_entity_new();
     int mx,my;
     float mf = 0;
     //Sprite *mouse;
@@ -36,7 +37,9 @@ int main(int argc, char * argv[])
 
     /*demo setup*/
     sprite = gf2d_sprite_load_image("../images/backgrounds/bg_flat.png");
-	mouse->sprite = gf2d_sprite_load_all("../images/sprite.png", 100, 100, 10);
+	mouse->sprite_list.idle = gf2d_sprite_load_all("../images/sprite.png", 100, 100, 10);
+	mouse->sprite = mouse->sprite_list.idle;
+	init_gungirl_ent(player, 1);
 	mouse->color = mouseColor;
     //mouse = gf2d_sprite_load_all("../images/sprite.png",100,100,10);
     /*main game loop*/
@@ -45,8 +48,10 @@ int main(int argc, char * argv[])
         SDL_PumpEvents();   // update SDL's internal event structures
         keys = SDL_GetKeyboardState(NULL); // get the keyboard state for this frame
         /*update things here*/
-        SDL_GetMouseState(&mx,&my);
-		mouse->position = vector2d(mx, my);
+        //SDL_GetMouseState(&mx,&my);
+		gungirl_get_inputs(player, keys);
+		update_gungirl_ent(player);
+		mouse->position = vector2d(5, 5);
         mf+=0.1;
         if (mf >= 16.0)mf = 0;
         
