@@ -1,9 +1,9 @@
 #include <SDL.h>
 #include "gf2d_graphics.h"
 #include "gf2d_sprite.h"
-//#include "g_entity.h"
 #include "simple_logger.h"
 #include "g_gungirl.h"
+#include "g_camera.h"
 
 int main(int argc, char * argv[])
 {
@@ -14,6 +14,7 @@ int main(int argc, char * argv[])
 	gf2d_entity_manager_init(20);
 	Entity *mouse = gf2d_entity_new();
 	Entity *player = gf2d_entity_new();
+	Camera *cam = init_camera(player, 340, 240, vector2d(0,0), vector2d(2100,700));
     int mx,my;
     float mf = 0;
     //Sprite *mouse;
@@ -24,10 +25,10 @@ int main(int argc, char * argv[])
     slog("---==== BEGIN ====---");
     gf2d_graphics_initialize(
         "gf2d",
-        1200,
-        720,
-        1200,
-        720,
+        480,
+        320,
+        480,
+        320,
         vector4d(0,0,0,255),
         0);
     gf2d_graphics_set_frame_delay(16);
@@ -59,7 +60,8 @@ int main(int argc, char * argv[])
         gf2d_graphics_clear_screen();// clears drawing buffers
         // all drawing should happen betweem clear_screen and next_frame
             //backgrounds drawn first
-             gf2d_sprite_draw_image(sprite,vector2d(0,0));
+		Vector2D pos = vector2d(0, 0);
+             gf2d_sprite_draw_image(sprite,pos,cam->position);
             
             //UI elements last
             /*gf2d_sprite_draw(
@@ -71,7 +73,9 @@ int main(int argc, char * argv[])
 				NULL,
                 &mouseColor,
                 (int)mf);*/
-			draw_entities();
+			update_camera(cam);
+			slog("camera position:%f,%f",cam->position.x, cam->position.y);
+			draw_entities(cam);
         gf2d_grahics_next_frame();// render current draw frame and skip to the next frame
         
         if (keys[SDL_SCANCODE_ESCAPE])done = 1; // exit condition

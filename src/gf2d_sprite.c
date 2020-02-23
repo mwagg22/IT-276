@@ -186,11 +186,12 @@ Sprite *gf2d_sprite_load_all(
     return sprite;
 }
 
-void gf2d_sprite_draw_image(Sprite *image,Vector2D position)
+void gf2d_sprite_draw_image(Sprite *image,Vector2D position,Vector2D offset)
 {
     gf2d_sprite_draw(
         image,
         position,
+		offset,
         NULL,
         NULL,
         NULL,
@@ -202,6 +203,7 @@ void gf2d_sprite_draw_image(Sprite *image,Vector2D position)
 void gf2d_sprite_draw(
     Sprite * sprite,
     Vector2D position,
+	Vector2D offset,
     Vector2D * scale,
     Vector2D * scaleCenter,
     Vector3D * rotation,
@@ -260,8 +262,8 @@ void gf2d_sprite_draw(
         sprite->frame_h);
     gfc_rect_set(
         target,
-        position.x - (scaleFactor.x * scaleOffset.x),
-        position.y - (scaleFactor.y * scaleOffset.y),
+        position.x - offset.x - (scaleFactor.x * scaleOffset.x),
+        position.y - offset.y - (scaleFactor.y * scaleOffset.y),
         sprite->frame_w * scaleFactor.x,
         sprite->frame_h * scaleFactor.y);
     SDL_RenderCopyEx(gf2d_graphics_get_renderer(),

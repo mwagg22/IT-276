@@ -5,7 +5,7 @@
 #include "simple_logger.h"
 #include "gfc_vector.h"
 #include "gfc_matrix.h"
-#include "g_entity.h"
+#include "g_camera.h"
 float framechange;
 //float frame;
 typedef struct
@@ -57,7 +57,7 @@ Entity *gf2d_entity_new()
     slog("request for entity failed: all full up");
     return NULL;
 }
-void free_ent_manager(int i){
+void set_to_zero_ent(int i){
 	gf2d_entity_manager.entity_list[i]._inuse = 0;
 	memset(&gf2d_entity_manager.entity_list[i], 0, sizeof(Entity));
 }
@@ -80,12 +80,13 @@ Entity *gf2d_return_list(){
 	return gf2d_entity_manager.entity_list;
 }
 
-void draw_entities(){
+void draw_entities(Camera* cam){
 	for (int i = 0; i < gf2d_entity_manager.entity_max; i++){
 		if (gf2d_entity_manager.entity_list[i]._inuse){
 			gf2d_sprite_draw(
 				gf2d_entity_manager.entity_list[i].sprite,
 				gf2d_entity_manager.entity_list[i].position,
+				cam->position,
 				NULL,
 				NULL,
 				NULL,
@@ -95,5 +96,17 @@ void draw_entities(){
 			//slog("position at i:%f,%f", gf2d_entity_manager.entity_list[i].position.x, gf2d_entity_manager.entity_list[i].position.y);
 		}
 	}
+}
+
+Entity *get_player_entity(){
+	for (int i = 0; i < gf2d_entity_manager.entity_max; i++){
+		if (gf2d_entity_manager.entity_list[i]._inuse&&gf2d_entity_manager.entity_list[i].type==ES_Player){
+			return &gf2d_entity_manager.entity_list[i];
+			}
+	}
+}
+
+void respawn(Entity *self){
+	self->position = self->start_position;
 }
 /*eol@eof*/

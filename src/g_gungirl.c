@@ -26,11 +26,11 @@ void gungirl_think(Entity *self){
 		}
 		break;
 	case dash:
-		{
-			gungirl_dash(self);
-			self->update_sprite(self);
-			prev_action_a = self->action;
-		}
+	{
+				 gungirl_dash(self);
+				 self->update_sprite(self);
+				 prev_action_a = self->action;
+	}
 		break;
 	case jump:
 		if (self->action != prev_action_a || self->jumpFrame>0){
@@ -40,7 +40,7 @@ void gungirl_think(Entity *self){
 		}
 		break;
 	default:
-		if (self->action != prev_action_a || self->attack_trigger == true && self->can_attack==true){
+		if (self->action != prev_action_a || self->attack_trigger == true && self->can_attack == true){
 			self->update_sprite(self);
 			prev_action_a = self->action;
 		}
@@ -114,48 +114,57 @@ void gungirl_special(Entity *self){
 void gungirl_dash(Entity *self){
 	self->is_dashing = true;
 	self->state = ES_Dash;
-	if (self->dashFrame < 60){
-		if (self->dir==Right)
+	if (self->dashFrame < 30){
+		if (self->dir == Right)
 			gungirl_displacement(self, vector2d(self->dashspeed, 0));
 		else
 			gungirl_displacement(self, vector2d(-self->dashspeed, 0));
 	}
 	else{
 		self->is_dashing = false;
-		self->state = ES_Idle;
+		if (self->is_grounded == true){
+			self->state = ES_Idle;
+		}
+		else{
+			self->state = ES_Jump;
+		}
 	}
 }
 void gungirl_jump(Entity *self){
-	self->is_grounded = false;
-	if (self->jumpFrame < 120){
+	if (self->jumpFrame < 45 && self->maxjump>0){
+		self->is_grounded = false;
 		self->state = ES_Jump;
-		gungirl_displacement(self, vector2d(0, -3));
+		gungirl_displacement(self, vector2d(0, -4));
 	}
+}
+void gungirl_damage(Entity *self, int damage){
+	self->health -= damage;
+	self->state = ES_Hit;
 }
 void update_gungirl_sprite(Entity *self){
 	switch (self->state){
-		
+
 	case(ES_Idle) : {slog("idle time");
-						if (self->in_attack == true){
-							if (self->sprite != self->sprite_list.attack1){
-								self->frame = 1;
-								slog("idle attack");
-								self->sprite = self->sprite_list.attack1;
-							}
-							//self->frame=frame;
-						}
-						else if (self->attack_trigger == true && self->can_attack == true && self->heldFrame < 9 ){
-							self->sprite = self->sprite_list.attack1;
-							//run attack
-							slog("attacking");
-							self->in_attack = true;
-							self->can_attack = false;
-							self->frame = 0;
-						}
-						else{
-							self->frame = 0;
-							self->sprite = self->sprite_list.idle;
-						}
+		if (self->in_attack == true){
+			if (self->sprite != self->sprite_list.attack1){
+				self->frame = 1;
+				slog("idle attack");
+				self->sprite = self->sprite_list.attack1;
+			}
+			//self->frame=frame;
+		}
+		else if (self->attack_trigger == true && self->can_attack == true && self->heldFrame < 9){
+			self->sprite = self->sprite_list.attack1;
+			//run attack
+			slog("attacking");
+			self->in_attack = true;
+			self->can_attack = false;
+			self->frame = 0;
+		}
+		else{
+			self->frame = 0;
+			self->sprite = self->sprite_list.idle;
+		}
 	}break;
 	case(ES_Running) : {
 						   if (self->in_attack == true){
@@ -172,7 +181,7 @@ void update_gungirl_sprite(Entity *self){
 							   self->in_attack = true;
 							   self->can_attack = false;
 						   }
-						   
+
 						   else{
 							   slog("running");
 							   self->frame = 0;
@@ -180,7 +189,7 @@ void update_gungirl_sprite(Entity *self){
 						   }
 	}break;
 	case(ES_Attacking) : {
-							 
+
 	}break;
 	case(ES_Jump) : {
 						if (self->in_attack == true){
@@ -197,7 +206,7 @@ void update_gungirl_sprite(Entity *self){
 							self->in_attack = true;
 							self->can_attack = false;
 						}
-						 
+
 						else{
 							slog("jumping");
 							self->frame = 0;
@@ -229,12 +238,17 @@ void update_gungirl_sprite(Entity *self){
 	case(ES_Dying) : {
 						 self->sprite = self->sprite_list.dying;
 	}break;
+	case(ES_Hit) : {
+						 slog("hit");
+					     self->frame = 0;
+						 self->sprite = self->sprite_list.hit;
+	}break;
 	}
 
 
 }
 void update_gungirl_ent(Entity *self){
-	self->frame+=0.1;
+	self->frame += 0.1;
 	switch (self->dir){
 	case(Right) :
 	{
@@ -246,13 +260,17 @@ void update_gungirl_ent(Entity *self){
 	}break;
 	}
 	if (!self->is_grounded){
-		self->position.y += 1.5;  //might change to gravity
+		if (self->state != ES_Dash){
+			self->position.y += 1.5;  //might change to gravity
+		}
 		self->state = ES_Jump;
 	}
 	if (self->position.y >= 500){
 		self->is_grounded = true;
 		if (self->state == ES_Jump){
 			self->state = ES_Idle;
+			self->maxjump = 1;
+			self->jumpFrame = 0;
 			self->update_sprite(self);
 		}
 	}
@@ -260,20 +278,20 @@ void update_gungirl_ent(Entity *self){
 		self->heldFrame++;
 	}
 	//end frames
-	if (self->frame > self->sprite->frames_per_line-1){
+	if (self->frame > self->sprite->frames_per_line - 1){
 		if (self->in_attack){
-				self->can_attack = true;
-				self->in_attack = false;
-				//slog("done");
-				slog("held");
-				self->update_sprite(self);
-			
+			self->can_attack = true;
+			self->in_attack = false;
+			//slog("done");
+			slog("held");
+			self->update_sprite(self);
+
 		}
 
-	else
-		self->frame = 0;
+		else
+			self->frame = 0;
 	}
-	
+
 }
 void init_gungirl_ent(Entity *self, int ctr){
 	self->state = ES_Idle;
@@ -281,7 +299,7 @@ void init_gungirl_ent(Entity *self, int ctr){
 	self->controlling = ctr;
 	self->frame = 0;
 	self->position = vector2d(100, 500);
-	self->color = vector4d( 255, 255, 255, 200 );
+	self->color = vector4d(255, 255, 255, 200);
 	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/idle.png", 100, 100, 1);
 	self->sprite_list.run = gf2d_sprite_load_all("../images/test/run.png", 100, 100, 4);
 	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/jump.png", 100, 100, 2);
@@ -294,6 +312,7 @@ void init_gungirl_ent(Entity *self, int ctr){
 	self->think = gungirl_think;
 	self->movementspeed = 1;
 	self->dashspeed = 3;
+	self->maxjump = 1;
 	self->update_sprite = update_gungirl_sprite;
 	self->is_grounded = true;
 	self->can_attack = true;
@@ -331,20 +350,31 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 				self->action = movement;
 			}
 			if (self->is_dashing){
-				gungirl_displacement(self, vector2d((dx_a*(self->dashspeed)), 0));
+				gungirl_displacement(self, vector2d((dx_a*(self->movementspeed)), 0));
 			}
 			else{
 				gungirl_displacement(self, vector2d((dx_a*(self->movementspeed)), 0));
 			}
 		}
-		
+
 		if (keys[SDL_SCANCODE_S]){
 			self->action = jump;
 			self->jumpFrame++;
 		}
 		if (keys[SDL_SCANCODE_D]){
-			self->action = dash;
-			self->dashFrame++;
+			if(self->dashFrame>30){
+				self->is_dashing = false;
+				if (self->is_grounded == true){
+					//self->action = none;
+				}
+				else{
+					self->action = jump;
+				}
+			}
+			else{
+				self->action = dash;
+				self->dashFrame++;
+			}
 		}
 		if (keys[SDL_SCANCODE_W]){
 			self->action = special;
@@ -370,8 +400,7 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 								 }
 				}
 					break;
-				}
-				break;
+				}break;
 			case SDL_KEYUP:
 
 				switch (event.key.keysym.sym)
@@ -391,16 +420,23 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 								self->dashFrame = 0;
 								self->is_dashing = false;
 								self->action = none;
-								self->state = ES_Idle;
+								if (self->is_grounded == true){
+									self->state = ES_Idle;
+								}
+								else{
+									self->state = ES_Jump;
+								}
+								//self->state = ES_Idle;
 				}break;
 				case SDLK_s:{
 								self->jumpFrame = 0;
 								self->action = none;
+								if (self->maxjump > 0 && !self->is_grounded){
+									self->maxjump--;
+								}
 								//self->state = ES_Idle;
 				}break;
-				//case SDLK_f: self->action = none; self->state = ES_Idle; self->update_sprite(self); break;
-					//case SDLK_UP: up_trigger_arrow = false; break;
-					//case SDLK_DOWN: down_trigger_arrow = false; break;
+
 				case SDLK_LEFT:{
 								   dx_a = 0;
 								   dy_a = 0;
@@ -413,7 +449,7 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 				} break;
 				case SDLK_RIGHT: {
 									 dx_a = 0;
-								     dy_a = 0;
+									 dy_a = 0;
 									 if (self->state == ES_Running){
 										 self->state = ES_Idle;
 										 self->action = none;
