@@ -1,13 +1,16 @@
 #include "gf2d_sprite.h"
 #include "g_entity.h"
+#include "simple_json.h"
 
 typedef struct{
 	SDL_Rect bounds;
 	Sprite *background;
-	Sprite *tiles;
+	char** tiles;
+	int width;
+	int height;
 }Level;
 
-void gf2d_level_manager_init(Uint32 entity_max);
-
-void free_ent_manager(int i);
-void load_level(Level *level);
+Level* load_level(char* filename);
+char** return_tiles(Level* level);
+int return_level_width(Level* level);
+int return_level_height(Level* level);

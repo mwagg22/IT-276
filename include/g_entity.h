@@ -2,6 +2,8 @@
 #include "gf2d_sprite.h"
 #include <stdbool.h>
 
+#ifndef Entity_Struct
+#define Entity_Struct
 typedef enum
 {
 	ES_Idle = 0,
@@ -14,7 +16,10 @@ typedef enum
 	ES_Jump = 7,
 	ES_Dash = 8
 }EntityState;
+#endif
 
+#ifndef Entity_Type
+#define Entity_Type
 typedef enum
 {
 	ES_Player = 0,
@@ -26,9 +31,26 @@ typedef enum
 	ES_NPC = 6,
 	ES_Enemy = 7,
 	ES_Stage = 8,
-	ES_Warp = 9
+	ES_Warp = 9,
+	ES_Pickup = 10,
+	ES_Hazard = 11
 }EntityType;
+#endif
 
+#ifndef item_s
+#define item_s
+typedef enum
+{
+	I_Health = 0,
+	I_Bolt = 1,
+	I_Energy = 2,
+	I_Chips = 3
+
+}Item_type;
+#endif
+
+#ifndef actioninput_s
+#define actioninput_s
 typedef enum
 {
 	attack = 0,
@@ -41,13 +63,19 @@ typedef enum
 	jump = 7,
 	dash = 8
 }Actioninput;
+#endif
 
+#ifndef box_s
+#define box_s
 typedef struct BoundBox
 {
 	int x, y;
 	int w, h;
 }BoundBox;
+#endif
 
+#ifndef sprite_index_h
+#define sprite_index_h
 typedef struct sprite_index
 {
 	Sprite *idle;
@@ -64,14 +92,33 @@ typedef struct sprite_index
 	Sprite *special2;
 	Sprite *charge;
 }sprite_index;
+#endif
 
-typedef enum{
+#ifndef dir_h
+#define dir_h
+typedef enum dir_s{
 	Right,
 	Left,
 	Up,
 	Down,
-}dir;
+}Dir;
+#endif
 
+#ifndef proj_h
+#define proj_h
+typedef struct Projectiles_s
+{
+	//Entity *self;
+	//struct Entity_S *Hitarray;
+	EntityType parentType;
+	int effect;
+	bool destroyOnCollision;
+	int aliveFrame;
+}Projectiles;
+#endif
+
+#ifndef Entity_h
+#define Entity_h
 typedef struct Entity_S
 {
 	Uint8           _inuse;         /**<flag to keep track if this isntance is in use and should not be reassigned*/
@@ -81,16 +128,19 @@ typedef struct Entity_S
 	Vector4D		color;		//sprite color
 	float			frame;
 	Vector2D        position;       /**<position of the entity in 3d space*/
+	Vector2D		start_position; //start point
 	Vector2D        velocity;       /**<velocity of the entity in 3d space*/
 	Vector2D        acceleration;   /**<acceleration of the entity in 3d space*/
 	Vector2D        scale;          /**<*please default to 1,1,1*/
 	Vector2D		flip;			//keep track of flipped value
 	EntityState     state;          /**<current state of the entity*/
 	BoundBox		hitbox;			//hitbox box
-	dir				dir;			//controls which way they face to flip sprite
+	Dir				dir;			//controls which way they face to flip sprite
 	Actioninput		action;			//keep track of input
 	Actioninput		prev_action;	//prev action
 	EntityType		type;			//check entity type
+	Item_type		itemType;       //for items
+	Projectiles		proj_data;		//for projectiles
 	struct health_s*		health_bar;
 	void(*think)(struct Entity_S* self);   /**<function called on entity think*/
 	void(*update_sprite)(struct Entity_S* self);   /**<function called on entity update*/
@@ -102,9 +152,11 @@ typedef struct Entity_S
 	void(*special)(struct Entity_S* self, int n);
 	void(*useItem)(struct Entity_S* self);
 	void(*get_inputs)(struct Entity *self, const Uint8 * keys, float delta);
+	void(*damage)(struct Entity_S *self, int damage);
 	int           health;
 	int           healthmax;
 	int           defense;
+	int			  bolts;
 	int           attackdmg;
 	int           mp;
 	float         movementspeed;
@@ -112,6 +164,7 @@ typedef struct Entity_S
 	int 		  controlling;
 	int			  specialnum;
 	int           attacknum;
+	int			  maxjump;
 	int           cast;//for magic casting
 	bool          show;
 	bool			can_attack;
@@ -127,10 +180,11 @@ typedef struct Entity_S
 	int				heldFrame; //count number of frames held
 	int				dashFrame;//dash frames
 	int				jumpFrame;//jump frames
+	int				invincibleFrame;//invincibility frames
 	int				comboNum;
 	void			*data;                     /**<additional entity specific data*/
 	struct Entity_S *target;//for enemies
-	//struct Entity_S *parent;//for projectiles
+	struct Entity_S *parent;//for projectiles
 	Vector2D location;//for warps
 }Entity;
 
@@ -147,6 +201,7 @@ void gf2d_entity_manager_init(Uint32 entity_max);
  * @return NULL on out of space or a pointer to an entity otherwise
  */
 Entity *gf2d_entity_new();
+void set_to_zero_ent(int i);
 void hide(Entity* toHide);
 void show(Entity* toShow);
 Entity *gf2d_return_list();
@@ -165,5 +220,7 @@ void update_ent_sprite(Entity *self);
 void update_ent(Entity *self);
 Entity *get_nearest_target(Entity *self, Entity *other);
 void set_hitbox(Entity *self, int width, int height);
-void free_ent_manager(int i);
-void draw_entities();
+void draw_entities(struct Camera_S* cam);
+Entity *get_player_entity();
+void respawn(Entity *self);
+#endif

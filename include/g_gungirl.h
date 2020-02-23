@@ -7,6 +7,7 @@ void gungirl_attack(Entity *self);
 void gungirl_special(Entity *self);
 void gungirl_dash(Entity *self);
 void gungirl_jump(Entity *self);
+void gungirl_damage(Entity *self, int damage);
 void update_gungirl_sprite(Entity *self);
 void update_gungirl_ent(Entity *self);
 void init_gungirl_ent(Entity *self, int ctr);

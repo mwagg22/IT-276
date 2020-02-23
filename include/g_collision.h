@@ -9,3 +9,7 @@ bool check_hitbox_collision(Entity *hitlist, Entity *other);
 void handle_hitbox_collision(Entity *self, Entity *other, Vector2D kick);
 void handle_projectile_collision(Entity *self, Entity *other);
 void handle_collision(Entity *self, Entity *other);
+void handle_hazard_collision(Entity *self, Entity *other);
+void check_tile_collision(Entity *self, char** tiles);
+void handle_tile_collision(Entity *self,int x,int y);
+void handle_item_collision(Entity *self, Entity *other);

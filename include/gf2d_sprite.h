@@ -33,7 +33,7 @@ Sprite *gf2d_sprite_load_image(char *filename);
  * @param image the sprite image to draw
  * @param position the x and y position to draw the image at (top left corner)
  */
-void gf2d_sprite_draw_image(Sprite *image,Vector2D position);
+void gf2d_sprite_draw_image(Sprite *image,Vector2D position,Vector2D offset);
 
 /**
  * @brief loads a sprite from file using the sprite system
@@ -63,6 +63,7 @@ Sprite *gf2d_sprite_load_all(
 void gf2d_sprite_draw(
     Sprite * sprite,
     Vector2D position,
+	Vector2D offset,
     Vector2D * scale,
     Vector2D * scaleCenter,
     Vector3D * rotation,
