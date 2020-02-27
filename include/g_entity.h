@@ -71,6 +71,7 @@ typedef struct BoundBox
 {
 	int x, y;
 	int w, h;
+	int offsetx, offsety;
 }BoundBox;
 #endif
 
@@ -84,10 +85,13 @@ typedef struct sprite_index
 	Sprite *dying;
 	Sprite *jump;
 	Sprite *dash;
+	Sprite *idleAttack;
+	Sprite *jumpAttack;
+	Sprite *dashAttack;
 	Sprite *attack1;
 	Sprite *attack2;
 	Sprite *attack3;
-	Sprite *attack4;
+	Sprite *runAttack;
 	Sprite *special1;
 	Sprite *special2;
 	Sprite *charge;
@@ -152,7 +156,7 @@ typedef struct Entity_S
 	void(*special)(struct Entity_S* self, int n);
 	void(*useItem)(struct Entity_S* self);
 	void(*get_inputs)(struct Entity *self, const Uint8 * keys, float delta);
-	void(*damage)(struct Entity_S *self, int damage);
+	void(*damage)(struct Entity_S *self, int damage,Vector2D kick);
 	int           health;
 	int           healthmax;
 	int           defense;
@@ -177,6 +181,10 @@ typedef struct Entity_S
 	bool			is_dashing; //check if dashing...lotta redundent things here
 	bool            attack_trigger; //rework attack remove attack from entitystate
 	bool			in_attack;//in attaciking state
+	bool			l_wall_collision;//for wall jump, check left and right colliision
+	bool			r_wall_collision;
+	bool right_trigger;
+	bool left_trigger;
 	int				heldFrame; //count number of frames held
 	int				dashFrame;//dash frames
 	int				jumpFrame;//jump frames
@@ -211,7 +219,8 @@ void show_all(Entity *list);
 
 
 void gf2d_entity_free(Entity *self);
-void gf2d_set_boundbox(Entity *self, Vector2D min, Vector2D max);
+void set_hitbox(Entity *self, int x,int y,int w,int h,int offsetx,int offsety);
+void update_hitbox_position(Entity *self);
 void set_position(Entity *self, Vector2D position);
 void displacement(Entity *self, Vector2D disp);
 void init_ent(Entity *self, int cont);
@@ -219,7 +228,6 @@ void update_sprite(Entity *self);
 void update_ent_sprite(Entity *self);
 void update_ent(Entity *self);
 Entity *get_nearest_target(Entity *self, Entity *other);
-void set_hitbox(Entity *self, int width, int height);
 void draw_entities(struct Camera_S* cam);
 Entity *get_player_entity();
 void respawn(Entity *self);
