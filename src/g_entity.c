@@ -109,4 +109,18 @@ Entity *get_player_entity(){
 void respawn(Entity *self){
 	self->position = self->start_position;
 }
+
+void set_hitbox(Entity *self, int x, int y, int w, int h,int offsetx,int offsety){
+	self->hitbox.x = x;
+	self->hitbox.y = y;
+	self->hitbox.w = w;
+	self->hitbox.h = h;
+	self->hitbox.offsetx = offsetx;
+	self->hitbox.offsety = offsety;
+}
+
+void update_hitbox_position(Entity *self){
+	self->hitbox.x = self->position.x;
+	self->hitbox.y = self->position.y;
+}
 /*eol@eof*/
