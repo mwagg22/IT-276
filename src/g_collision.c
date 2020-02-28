@@ -91,14 +91,14 @@ void check_tile_collision(Entity *self, int** tiles){
 	if (top_bound < 0)top_bound = 0;
 	if (bottom_bound < 0)bottom_bound = 0;
 	//slog("top to bottom:%i - %i", top_bound, bottom_bound);
-	for (int i = top_bound; i <= bottom_bound; i++){
-		for (int j = left_bound; j <= right_bound; j++){
+	for (int i = left_bound; i <= right_bound; i++){
+		for (int j = top_bound; j <= bottom_bound; j++){
 			//handle tile collisions
-			if (tiles[i][j] != 19&&tiles[i][j]!=10){
+			if (tiles[j][i] != 19&&tiles[j][i]!=10){
 				collision_ctr++;
 				//slog("collision check");
-				handle_tile_collision(self, j, i);
-				return;
+				//handle_tile_collision(self, i, j);
+				//return;
 			}
 		}
 	}
@@ -110,53 +110,131 @@ void check_tile_collision(Entity *self, int** tiles){
 }
 void handle_tile_collision(Entity *self, int x, int y){
 
-	if (self->velocity.x>=0){
+	//if (self->velocity.x>=0){
 		if ((self->position.x + self->hitbox.w + self->hitbox.offsetx >= x * 16.0f && self->position.x + self->hitbox.offsetx + self->hitbox.w <= x * 16.0f + 16.0f) && (self->position.y + self->hitbox.h + self->hitbox.offsety > y * 16.0f)){
-			slog("right collision");
+			//slog("right collision");
 			//self->r_wall_collision = true;
 			self->position.x -= 1;
 			self->velocity.x = 0;
 		}
-	}
-	else{
+	//}
+	//else{
 		if((self->position.x + self->hitbox.offsetx >= x * 16.0f && self->position.x + self->hitbox.offsetx <= x * 16.0f + 16.0f) && (self->position.y + self->hitbox.w + self->hitbox.offsety > y * 16.0f)){
 		//self->l_wall_collision = true;
 		self->position.x += 1;
 		self->velocity.x = 0;
-		slog("left collision");
-	}
+		//slog("left collision");
+	//}
 	}
 	//self->is_grounded = false;
 	if (self->velocity.y >= 0){
-		if ((self->position.y + self->hitbox.h + self->hitbox.offsety >= y * 16.0f) && (self->position.y + self->hitbox.h + self->hitbox.offsety <= (y * 16.0f+16.0f))){
-			self->is_grounded = true;
+		if ((self->position.y + self->hitbox.h + self->hitbox.offsety > y * 16.0f)){
+			//self->is_grounded = true;
 			self->position.y -= 1;
-			slog("top collision");
+
+			//slog("top collision");
 		}
 	}
 	else{
 		 if (self->position.y + self->hitbox.offsety > y * 16 + 16){
-			self->is_grounded = false;
+			//self->is_grounded = false;
 			//self->position.y += 1;
 		}
 	}
 }
 
-void check_tile_ahead(Entity *self, int** tiles){
-	//1 for right, 0 for left
-	//check one tile ahead
-	int bottom_bound = ((self->position.y + self->hitbox.offsety) / 16);//y
-		int forward = ((self->position.x + self->hitbox.w + self->hitbox.offsetx) / 16)+1;//x
-		if (tiles[bottom_bound][forward] != 19)
-			self->r_wall_collision = true;
-		else
-			self->r_wall_collision = false;
-		int forward_l = ((self->position.x + self->hitbox.offsetx) / 16)-1;//x
-		if (tiles[bottom_bound][forward_l] != 19)
+//void check_tile_ahead(Entity *self, int** tiles){
+//	//1 for right, 0 for left
+//	//check one tile ahead
+//		int bottom_bound = ((self->position.y + self->hitbox.offsety) / 16);//y
+//		int forward = ((self->position.x + self->hitbox.w + self->hitbox.offsetx) / 16)+1;//x
+//		int bottom_tile = ((self->position.y + self->hitbox.offsety + self->hitbox.h) / 16) ;
+//		slog("bottom collision,magnitude:%f ", vector2d_magnitude_between(vector2d(0, self->position.y + self->hitbox.offsety + self->hitbox.h), vector2d(0, bottom_tile * 16)));
+//
+//		if (tiles[bottom_bound][forward] != 19 && vector2d_magnitude_between(vector2d(self->position.x + self->hitbox.w + self->hitbox.offsetx, 0), vector2d(forward * 16, 0)) <= 1)
+//			self->r_wall_collision = true;
+//		else
+//			self->r_wall_collision = false;
+//		int forward_r = ((self->position.x + self->hitbox.offsetx) / 16)-1;//x
+//		//slog("right collision,magnitude:%f ", vector2d_magnitude_between(vector2d(self->position.x + self->hitbox.offsety, 0), vector2d(forward_r * 16+16, 0)));
+//		if (tiles[bottom_bound][forward_r] != 19 && vector2d_magnitude_between(vector2d(self->position.x + self->hitbox.offsetx, 0), vector2d(forward_r * 16 + 16, 0)) <= 1){
+//			//
+//			self->l_wall_collision = true;
+//			
+//		}
+//		else
+//			self->l_wall_collision = false;
+//		
+//		if (tiles[bottom_tile][forward - 1] != 19 && vector2d_magnitude_between(vector2d(0, self->position.y + self->hitbox.offsety + self->hitbox.h), vector2d(0, bottom_tile * 16)) <= 1)
+//			self->is_grounded = true;
+//		else
+//			self->is_grounded = false;
+//}
+
+void check_tile_ahead(Entity* self, int** tiles){
+	//left tile
+	int upper_bound = ((self->position.y + self->hitbox.offsety) / 16);
+	int lower_bound = ((self->position.y + self->hitbox.offsety + self->hitbox.h) / 16);
+	int left_tile = ((self->position.x + self->hitbox.offsetx) / 16) - 1;
+	int l = 0;
+	int r = 0;
+	//lower tile
+
+	int left_bound = ((self->position.x + self->hitbox.offsetx) / 16);
+	int right_bound = ((self->position.x + self->hitbox.w + self->hitbox.offsetx) / 16);
+	int bottom_tile = ((self->position.y + self->hitbox.offsety + self->hitbox.h) / 16);
+	int t = 0;
+	for (int i = left_bound; i <= right_bound; i++){
+		if (tiles[bottom_tile][i] != 19 && vector2d_magnitude_between(vector2d(0, self->position.y + self->hitbox.offsety + self->hitbox.h), vector2d(0, bottom_tile * 16)) <= 1){
+			self->is_grounded = true;
+			t++;
+			//slog("grownded");
+			//return;
+		}
+	}
+	if (t == 0)
+		self->is_grounded = false;
+	for (int i = upper_bound; i <= lower_bound; i++){
+		if (self->is_grounded&&i == lower_bound)
+			continue;
+		if (tiles[i][left_tile] != 19 && vector2d_magnitude_between(vector2d(self->position.x + self->hitbox.offsetx, 0), vector2d(left_tile * 16 + 16, 0)) <= 1 ){
 			self->l_wall_collision = true;
-		else
-			self->l_wall_collision = false;
+			l++;
+			//slog("left wall collision");
+			//return;
+			//if (tiles[i][left_tile + 1] != 19 && (self->position.y + self->hitbox.h + self->hitbox.offsety > i * 16.0f)){
+				//self->position.x += 1;
+			//}
+		}
+	}
+	if (l == 0){
+		self->l_wall_collision = false;
+	}
+	//right tile
+	int right_tile = ((self->position.x + self->hitbox.w + self->hitbox.offsetx) / 16) + 1;
+	for (int i = upper_bound; i <= lower_bound; i++){
+		if (self->is_grounded&&i == lower_bound)
+			continue;
+		if (tiles[i][right_tile] != 19 && vector2d_magnitude_between(vector2d(self->position.x + self->hitbox.w + self->hitbox.offsetx, 0), vector2d(right_tile * 16, 0)) <= 1){
+			self->r_wall_collision = true;
+			//return;
+			r++;
+			slog("right wall collision");
+			
+		}
+		
+		//if (tiles[i][right_tile - 1] != 19){
+			//self->position.x -=1;
+		//}
+
+	}
+	if (r == 0){
+		self->r_wall_collision = false;
+	}
+
+	
 }
+
 
 void handle_item_collision(Entity *self, Entity *other){
 	switch (other->itemType){

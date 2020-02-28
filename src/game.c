@@ -61,7 +61,7 @@ int main(int argc, char * argv[])
         /*update things here*/
         //SDL_GetMouseState(&mx,&my);
 		gungirl_get_inputs(player, keys);
-		//check_tile_ahead(player, level->tiles);
+		check_tile_ahead(player, level->tiles);
 		check_tile_collision(player, level->tiles);
 		update_gungirl_ent(player);
 		mouse->position = vector2d(5, 5);

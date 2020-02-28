@@ -132,7 +132,7 @@ void gungirl_dash(Entity *self){
 }
 void gungirl_jump(Entity *self){
 	if (self->jumpFrame < 20 && self->maxjump>0){
-		//self->is_grounded = false;
+		self->is_grounded = false;
 		self->state = ES_Jump;
 		gungirl_displacement(self, vector2d(0, -4));
 	}
@@ -193,21 +193,43 @@ void update_gungirl_sprite(Entity *self){
 
 	}break;
 	case(ES_Jump) : {
-						if (self->in_attack == true){
-							if (self->sprite != self->sprite_list.jumpAttack){
-								self->sprite = self->sprite_list.jumpAttack;
+						if (self->in_attack){
+							if (self->sprite != self->sprite_list.jumpAttack || self->sprite != self->sprite_list.wallAttack){
+								if (!self->is_wall_sliding){
+									self->sprite = self->sprite_list.jumpAttack;
+									slog("hi");
+								}
+								else
+									self->sprite = self->sprite_list.wallAttack;
 							}
 							//self->frame=frame;
 						}
 						else if (self->attack_trigger == true && self->can_attack == true){
-							self->frame = 0;
-							self->sprite = self->sprite_list.jumpAttack;
-							//run attack
-							slog("jump attack");
-							self->in_attack = true;
-							self->can_attack = false;
+							if (!self->is_wall_sliding){
+								self->frame = 0;
+								self->sprite = self->sprite_list.jumpAttack;
+								//run attack
+								slog("jump attack");
+								self->in_attack = true;
+								self->can_attack = false;
+							}
+							else{
+								self->frame = 0;
+								self->sprite = self->sprite_list.wallAttack;
+								//run attack
+								slog("wallslide attack");
+								self->in_attack = true;
+								self->can_attack = false;
+								self->is_wall_sliding = true;
+							}
 						}
-
+						else if (self->left_trigger&&self->l_wall_collision || self->right_trigger&&self->r_wall_collision){
+							self->frame = 0;
+							self->sprite = self->sprite_list.wallSlide;
+							self->is_wall_sliding = true;
+							//run attack
+							slog("wall slide");
+						}
 						else{
 							slog("jumping");
 							self->frame = 0;
@@ -266,15 +288,25 @@ void update_gungirl_ent(Entity *self){
 	}break;
 	}
 	if (!self->is_grounded){
-		if (self->state != ES_Dash){
-			self->position.y += 1.5;  //might change to gravity
-			self->velocity.y += 1.5;
+		if (self->is_wall_sliding == false){
+			if (self->state != ES_Dash){
+				self->position.y += 1.5;  //might change to gravity
+				self->velocity.y += 1.5;
+			}
+		}
+		else{
+			self->position.y += .5;  //might change to gravity
+			self->velocity.y += .5;
+			slog("wall sliding");
 		}
 		self->state = ES_Jump;
-		if (self->sprite != self->sprite_list.jump || self->sprite != self->sprite_list.jumpAttack)
+		if (self->sprite != self->sprite_list.jump || self->sprite != self->sprite_list.jumpAttack || self->sprite != self->sprite_list.wallSlide || self->sprite != self->sprite_list.wallAttack)
 			self->update_sprite(self);
 	}
-	slog("velocity:%f", self->velocity.y);
+	if (!self->left_trigger&&self->l_wall_collision || self->left_trigger&&!self->l_wall_collision || !self->right_trigger && self->r_wall_collision || self->right_trigger && !self->r_wall_collision){
+		self->is_wall_sliding = false;
+	}
+	//slog("velocity:%f", self->velocity.y);
 	//if (self->position.y >= 500){
 		if(self->is_grounded){
 		if (self->state == ES_Jump){
@@ -313,6 +345,8 @@ void init_gungirl_ent(Entity *self, int ctr){
 	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/idle.png", 32, 32, 1);
 	self->sprite_list.run = gf2d_sprite_load_all("../images/test/run.png", 32, 32, 4);
 	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/jump.png", 32, 32, 2);
+	self->sprite_list.wallSlide = gf2d_sprite_load_all("../images/test/wallSlide.png", 32, 32, 1);
+	self->sprite_list.wallAttack = gf2d_sprite_load_all("../images/test/wallAttack.png", 32, 32, 3);
 	self->sprite_list.dash = gf2d_sprite_load_all("../images/test/dash.png", 32, 32, 1);
 	//self->sprite_list->dying;
 	self->sprite_list.idleAttack = gf2d_sprite_load_all("../images/test/idleAttack.png", 32, 32, 3);
@@ -434,7 +468,6 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 				{
 				case SDLK_a:{
 								self->action = none;
-								self->left_trigger = false;
 								self->is_held = false;
 								if (self->heldFrame > 60){
 									//fire different type of attack
@@ -469,6 +502,7 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 				case SDLK_LEFT:{
 								   dx_a = 0;
 								   dy_a = 0;
+								   self->left_trigger = false;
 								   if (self->state == ES_Running){
 									   self->state = ES_Idle;
 									   self->action = none;
@@ -479,6 +513,7 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 				case SDLK_RIGHT: {
 									 dx_a = 0;
 									 dy_a = 0;
+									 self->right_trigger = false;
 									 if (self->state == ES_Running){
 										 self->state = ES_Idle;
 										 self->action = none;
