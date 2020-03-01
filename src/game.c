@@ -7,6 +7,8 @@
 #include "g_camera.h"
 #include "g_level.h"
 #include "g_collision.h"
+#include "g_shooterenemy.h"
+#include "g_rollerenemy.h"
 void update_game(Camera *cam,Level *level){
 	update_camera(cam);
 	//slog("camera position:%f,%f",cam->position.x, cam->position.y);
@@ -21,8 +23,9 @@ int main(int argc, char * argv[])
     const Uint8 * keys;
     Sprite *sprite;
 	gf2d_entity_manager_init(20);
-	Entity *mouse = gf2d_entity_new();
+	//Entity *mouse = gf2d_entity_new();
 	Entity *player = gf2d_entity_new();
+	Entity *shooter = gf2d_entity_new();
 	Camera *cam = init_camera(player, 480, 320, vector2d(0, 0), vector2d(2100, 500));
 	SDL_Rect rect;
     int mx,my;
@@ -48,10 +51,11 @@ int main(int argc, char * argv[])
 	Level *level = load_level("../level1.json");
     /*demo setup*/
     sprite = gf2d_sprite_load_image("../images/backgrounds/bg_flat.png");
-	mouse->sprite_list.idle = gf2d_sprite_load_all("../images/sprite.png", 100, 100, 10);
-	mouse->sprite = mouse->sprite_list.idle;
+	//mouse->sprite_list.idle = gf2d_sprite_load_all("../images/sprite.png", 100, 100, 10);
+	//mouse->sprite = mouse->sprite_list.idle;
 	init_gungirl_ent(player, 1);
-	mouse->color = mouseColor;
+	init_rollerenemy_ent(shooter, 0);
+	//mouse->color = mouseColor;
     //mouse = gf2d_sprite_load_all("../images/sprite.png",100,100,10);
     /*main game loop*/
     while(!done)
@@ -62,13 +66,16 @@ int main(int argc, char * argv[])
         //SDL_GetMouseState(&mx,&my);
 		gungirl_get_inputs(player, keys);
 		check_tile_ahead(player, level->tiles);
-		check_tile_collision(player, level->tiles);
+		check_tile_ahead(shooter, level->tiles);
+		//check_tile_collision(player, level->tiles);
 		update_gungirl_ent(player);
-		mouse->position = vector2d(5, 5);
+		update_rollerenemy_ent(shooter);
+		entity_in_bounds(shooter, cam);
+		//mouse->position = vector2d(5, 5);
         mf+=0.1;
         if (mf >= 16.0)mf = 0;
 		
-		mouse->frame = (int)mf;
+		//mouse->frame = (int)mf;
         gf2d_graphics_clear_screen();// clears drawing buffers
         // all drawing should happen betweem clear_screen and next_frame
             //backgrounds drawn first

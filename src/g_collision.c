@@ -1,29 +1,32 @@
 #include "g_collision.h"
 #include "simple_logger.h"
 #include <math.h>
+
 void collision_check(Entity *ents, Uint32 entity_max){
 	for (int i = 0; i < entity_max-1;i++){
 		for (int j = 1; j < entity_max; j++){
 			if (check_collision(&ents[i], &ents[j])){
+				//slog("collision");
 				handle_collision(&ents[i], &ents[j]);
 				handle_collision(&ents[j], &ents[i]);
 			}
 		}
 	}
 }
+
 bool check_collision(Entity *self, Entity *other){
 	return(
-		self->position.x + self->hitbox.x >= other->position.x + other->hitbox.x &&
-		self->position.x + self->hitbox.x  < other->position.x + other->hitbox.x &&
-		self->position.y + self->hitbox.y >= other->position.y + other->hitbox.y &&
-		self->position.y + self->hitbox.y  < other->position.y + other->hitbox.y );
+		self->position.x + self->hitbox.w + self->hitbox.offsetx > other->position.x + other->hitbox.offsetx &&
+		self->position.x + self->hitbox.offsetx  < other->position.x + other->hitbox.offsetx + other->hitbox.w &&
+		self->position.y + self->hitbox.h + self->hitbox.offsety > other->position.y + other->hitbox.offsety &&
+		self->position.y + self->hitbox.offsety < other->position.y + other->hitbox.offsety + other->hitbox.h);
 }
 
 void handle_collision(Entity *self, Entity *other){
 	//do stuff
 	switch (self->type){
 	case ES_Player:{
-	   int dir = (other->position.x > self->position.x) ? -1 : 1;
+	   int dir = (other->position.x >= self->position.x) ? -1 : 1;
 	    Vector2D kick = vector2d(5 * dir, 0);
 		if (self->invincibleFrame == 0){
 			if (other->type == ES_Projectile){
@@ -42,11 +45,11 @@ void handle_collision(Entity *self, Entity *other){
 		}
 	}break;
 	case ES_Enemy:{
-		int dir = (other->position.x > self->position.x) ? -1 : 1;
+		int dir = (other->position.x >= self->position.x) ? -1 : 1;
 		Vector2D kick = vector2d(5 * dir, 0);
 			if (other->type == ES_Projectile){
 				//damage
-					//handle_projectile_collision(self, other, kick);
+					handle_projectile_collision(self, other, kick);
 					}
 			else if (other->type == ES_Hazard){
 							 //die instant
@@ -55,11 +58,17 @@ void handle_collision(Entity *self, Entity *other){
 	case ES_Projectile:{
 						   if (other->type == ES_Player){
 							   //destroy self
+							   if (self->parent->type != ES_Player){
+								   handle_projectile_collision(self, other, vector2d(0, 0));
+							   }
 						   }
 						   if (other->type == ES_Enemy){
 							   //destroy self
+							   if (other->parent->type != ES_Enemy){
+								   handle_projectile_collision(self, other, vector2d(0, 0));
+							   }
 						   }
-	}
+	}break;
 	}
 }
 
@@ -72,10 +81,13 @@ void handle_hit_collision(Entity *self, Entity *other, Vector2D kick){
 
 void handle_projectile_collision(Entity *self, Entity *other,Vector2D kick){
 	self->damage(self, other->attackdmg,kick);
-	if (other->proj_data.destroyOnCollision){
-		set_to_zero_ent(other->Ent_ID);
+	if (self->type == ES_Projectile){
+		if (self->proj_data.destroyOnCollision){
+			set_to_zero_ent(self->Ent_ID);
+		}
 	}
 }
+
 void handle_hazard_collision(Entity *self, Entity *other, Vector2D kick){
 	
 }
@@ -111,7 +123,7 @@ void check_tile_collision(Entity *self, int** tiles){
 void handle_tile_collision(Entity *self, int x, int y){
 
 	//if (self->velocity.x>=0){
-		if ((self->position.x + self->hitbox.w + self->hitbox.offsetx >= x * 16.0f && self->position.x + self->hitbox.offsetx + self->hitbox.w <= x * 16.0f + 16.0f) && (self->position.y + self->hitbox.h + self->hitbox.offsety > y * 16.0f)){
+		if ((self->position.x + self->hitbox.w + self->hitbox.offsetx > x * 16.0f && self->position.x + self->hitbox.offsetx + self->hitbox.w < x * 16.0f + 16.0f) && (self->position.y + self->hitbox.h + self->hitbox.offsety > y * 16.0f)){
 			//slog("right collision");
 			//self->r_wall_collision = true;
 			self->position.x -= 1;
@@ -119,7 +131,7 @@ void handle_tile_collision(Entity *self, int x, int y){
 		}
 	//}
 	//else{
-		if((self->position.x + self->hitbox.offsetx >= x * 16.0f && self->position.x + self->hitbox.offsetx <= x * 16.0f + 16.0f) && (self->position.y + self->hitbox.w + self->hitbox.offsety > y * 16.0f)){
+		if((self->position.x + self->hitbox.offsetx > x * 16.0f && self->position.x + self->hitbox.offsetx < x * 16.0f + 16.0f) && (self->position.y + self->hitbox.w + self->hitbox.offsety > y * 16.0f)){
 		//self->l_wall_collision = true;
 		self->position.x += 1;
 		self->velocity.x = 0;
@@ -130,7 +142,7 @@ void handle_tile_collision(Entity *self, int x, int y){
 	if (self->velocity.y >= 0){
 		if ((self->position.y + self->hitbox.h + self->hitbox.offsety > y * 16.0f)){
 			//self->is_grounded = true;
-			self->position.y -= 1;
+			//self->position.y -= 1;
 
 			//slog("top collision");
 		}
@@ -143,33 +155,6 @@ void handle_tile_collision(Entity *self, int x, int y){
 	}
 }
 
-//void check_tile_ahead(Entity *self, int** tiles){
-//	//1 for right, 0 for left
-//	//check one tile ahead
-//		int bottom_bound = ((self->position.y + self->hitbox.offsety) / 16);//y
-//		int forward = ((self->position.x + self->hitbox.w + self->hitbox.offsetx) / 16)+1;//x
-//		int bottom_tile = ((self->position.y + self->hitbox.offsety + self->hitbox.h) / 16) ;
-//		slog("bottom collision,magnitude:%f ", vector2d_magnitude_between(vector2d(0, self->position.y + self->hitbox.offsety + self->hitbox.h), vector2d(0, bottom_tile * 16)));
-//
-//		if (tiles[bottom_bound][forward] != 19 && vector2d_magnitude_between(vector2d(self->position.x + self->hitbox.w + self->hitbox.offsetx, 0), vector2d(forward * 16, 0)) <= 1)
-//			self->r_wall_collision = true;
-//		else
-//			self->r_wall_collision = false;
-//		int forward_r = ((self->position.x + self->hitbox.offsetx) / 16)-1;//x
-//		//slog("right collision,magnitude:%f ", vector2d_magnitude_between(vector2d(self->position.x + self->hitbox.offsety, 0), vector2d(forward_r * 16+16, 0)));
-//		if (tiles[bottom_bound][forward_r] != 19 && vector2d_magnitude_between(vector2d(self->position.x + self->hitbox.offsetx, 0), vector2d(forward_r * 16 + 16, 0)) <= 1){
-//			//
-//			self->l_wall_collision = true;
-//			
-//		}
-//		else
-//			self->l_wall_collision = false;
-//		
-//		if (tiles[bottom_tile][forward - 1] != 19 && vector2d_magnitude_between(vector2d(0, self->position.y + self->hitbox.offsety + self->hitbox.h), vector2d(0, bottom_tile * 16)) <= 1)
-//			self->is_grounded = true;
-//		else
-//			self->is_grounded = false;
-//}
 
 void check_tile_ahead(Entity* self, int** tiles){
 	//left tile
@@ -192,8 +177,12 @@ void check_tile_ahead(Entity* self, int** tiles){
 			//return;
 		}
 	}
-	if (t == 0)
+	if (t == 0){
+		if (!self->jumped){
+			self->falling = true;
+		}
 		self->is_grounded = false;
+	}
 	for (int i = upper_bound; i <= lower_bound; i++){
 		if (self->is_grounded&&i == lower_bound)
 			continue;
@@ -201,10 +190,6 @@ void check_tile_ahead(Entity* self, int** tiles){
 			self->l_wall_collision = true;
 			l++;
 			//slog("left wall collision");
-			//return;
-			//if (tiles[i][left_tile + 1] != 19 && (self->position.y + self->hitbox.h + self->hitbox.offsety > i * 16.0f)){
-				//self->position.x += 1;
-			//}
 		}
 	}
 	if (l == 0){
@@ -219,7 +204,7 @@ void check_tile_ahead(Entity* self, int** tiles){
 			self->r_wall_collision = true;
 			//return;
 			r++;
-			slog("right wall collision");
+			//slog("right wall collision");
 			
 		}
 		
@@ -242,7 +227,10 @@ void handle_item_collision(Entity *self, Entity *other){
 					  self->health += other->health;
 	}break;
 	case I_Bolt:{
-					self->bolts += other->bolts;
+					self->bolts += other->health;
+	}break;
+	case I_Energy:{
+					  self->energy += other->health;
 	}break;
 	}
 	set_to_zero_ent(other->Ent_ID);

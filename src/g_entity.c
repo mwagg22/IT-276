@@ -6,6 +6,7 @@
 #include "gfc_vector.h"
 #include "gfc_matrix.h"
 #include "g_camera.h"
+#include "g_collision.h"
 float framechange;
 //float frame;
 typedef struct
@@ -49,6 +50,7 @@ Entity *gf2d_entity_new()
         memset(&gf2d_entity_manager.entity_list[i],0,sizeof(Entity));
         gf2d_entity_manager.entity_list[i]._inuse = 1;
 		gf2d_entity_manager.entity_list[i].Ent_ID = (int)i;
+		gf2d_entity_manager.entity_list[i].type = -1;
 		gf2d_entity_manager.entity_list[i].show = true;
 		slog("Entity arr :%i", i);
 		//slog("Size of ents list:%i", sizeof(gf2d_entity_manager.entity_list) / sizeof(int));
@@ -94,20 +96,32 @@ void draw_entities(Camera* cam){
 				&gf2d_entity_manager.entity_list[i].color,
 				(int)gf2d_entity_manager.entity_list[i].frame);
 			//slog("position at i:%f,%f", gf2d_entity_manager.entity_list[i].position.x, gf2d_entity_manager.entity_list[i].position.y);
+			//check within bounds
+			//update entities			
 		}
 	}
+	collision_check(gf2d_entity_manager.entity_list, 2);
 }
 
 Entity *get_player_entity(){
 	for (int i = 0; i < gf2d_entity_manager.entity_max; i++){
-		if (gf2d_entity_manager.entity_list[i]._inuse&&gf2d_entity_manager.entity_list[i].type==ES_Player){
+		if (gf2d_entity_manager.entity_list[i].type==ES_Player){
 			return &gf2d_entity_manager.entity_list[i];
 			}
 	}
 }
 
+void entity_in_bounds(Entity* self, Camera *cam){
+	if (!vector_in_camera_bounds(cam, self->start_position)){
+		if (!in_camera_bounds(cam, self)||self->state==ES_Dead){
+			respawn(self);
+		}
+	}
+}
 void respawn(Entity *self){
 	self->position = self->start_position;
+	self->health = self->healthmax;
+	self->state = ES_Idle;
 }
 
 void set_hitbox(Entity *self, int x, int y, int w, int h,int offsetx,int offsety){
@@ -122,5 +136,15 @@ void set_hitbox(Entity *self, int x, int y, int w, int h,int offsetx,int offsety
 void update_hitbox_position(Entity *self){
 	self->hitbox.x = self->position.x;
 	self->hitbox.y = self->position.y;
+}
+
+void flip(Entity *self, Vector2D position){
+	if (position.x > self->position.x){
+		self->dir = Right;
+	}
+	else
+	{
+		self->dir = Left;
+	}
 }
 /*eol@eof*/

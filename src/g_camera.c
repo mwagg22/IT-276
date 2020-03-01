@@ -40,9 +40,17 @@ Vector2D distance_from_camera(Camera *cam, Entity* target){
 	vector2d_sub(c, cam->position, target->position);
 	return c;
 }
+
 bool in_camera_bounds(Camera *cam, Entity *self){
-	return(self->position.x > cam->position.x&&
-		self->position.x < cam->position.x + cam->viewWidth&&
-		self->position.x > cam->position.y&&
-		self->position.y < cam->position.y + cam->viewHeight);
+	return(self->position.x + self->hitbox.offsetx + self->hitbox.w > cam->position.x&&
+		self->position.x + self->hitbox.offsetx < cam->position.x + cam->viewWidth&&
+		self->position.y + self->hitbox.offsety + self->hitbox.h > cam->position.y&&
+		self->position.y + self->hitbox.offsety < cam->position.y + cam->viewHeight);
+}
+
+bool vector_in_camera_bounds(Camera *cam, Vector2D vector){
+	return(vector.x > cam->position.x&&
+		vector.x < cam->position.x + cam->viewWidth&&
+		vector.y > cam->position.y&&
+		vector.y < cam->position.y + cam->viewHeight);
 }
