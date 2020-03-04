@@ -13,6 +13,8 @@ typedef struct Sprite_S
     SDL_Texture *texture;
     Uint32 frames_per_line;
     Uint32 frame_w,frame_h;
+	int sprite_offsetx;
+	int sprite_offsety;
 }Sprite;
 
 /**

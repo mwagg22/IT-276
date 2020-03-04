@@ -9,3 +9,5 @@ void update_rollerenemy_ent(Entity *self);
 void init_rollerenemy_ent(Entity *self, int ctr);
 void rollerenemy_set_position(Entity *self, Vector2D position);
 void rollerenemy_displacement(Entity *self, Vector2D position);
+void rollerenemy_damage(Entity *self, int damage, Vector2D kick);
+void rollerenemy_death(Entity* self);
