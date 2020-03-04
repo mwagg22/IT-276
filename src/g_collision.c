@@ -4,7 +4,11 @@
 
 void collision_check(Entity *ents, Uint32 entity_max){
 	for (int i = 0; i < entity_max-1;i++){
+		if (ents[i].state == ES_Dead)
+			continue;
 		for (int j = 1; j < entity_max; j++){
+			if (ents[j].state == ES_Dead)
+				continue;
 			if (check_collision(&ents[i], &ents[j])){
 				//slog("collision");
 				handle_collision(&ents[i], &ents[j]);
@@ -30,7 +34,7 @@ void handle_collision(Entity *self, Entity *other){
 	    Vector2D kick = vector2d(5 * dir, 0);
 		if (self->invincibleFrame == 0){
 			if (other->type == ES_Projectile){
-				if (other->parent->type != ES_Player)
+				if (other->proj_data.parentType != ES_Player)
 					handle_projectile_collision(self, other, kick);
 			}
 			else if (other->type == ES_Hazard){
@@ -49,7 +53,8 @@ void handle_collision(Entity *self, Entity *other){
 		Vector2D kick = vector2d(5 * dir, 0);
 			if (other->type == ES_Projectile){
 				//damage
-					handle_projectile_collision(self, other, kick);
+					if (other->proj_data.parentType != ES_Enemy)
+						handle_projectile_collision(self, other, kick);
 					}
 			else if (other->type == ES_Hazard){
 							 //die instant
@@ -58,15 +63,21 @@ void handle_collision(Entity *self, Entity *other){
 	case ES_Projectile:{
 						   if (other->type == ES_Player){
 							   //destroy self
-							   if (self->parent->type != ES_Player){
+							   if (self->proj_data.parentType != ES_Player){
 								   handle_projectile_collision(self, other, vector2d(0, 0));
 							   }
 						   }
 						   if (other->type == ES_Enemy){
 							   //destroy self
-							   if (other->parent->type != ES_Enemy){
+							   if (self->proj_data.parentType != ES_Enemy){
 								   handle_projectile_collision(self, other, vector2d(0, 0));
 							   }
+						   }
+	}break;
+	case ES_Item:{
+						   if (other->type == ES_Player){
+							   //destroy self
+								  handle_item_collision(self, other);
 						   }
 	}break;
 	}
@@ -76,20 +87,22 @@ bool check_hit_collision(Entity *hitlist, Entity *other){
 
 }
 void handle_hit_collision(Entity *self, Entity *other, Vector2D kick){
-	//self->damage(self, other->attackdmg,);
+
 }
 
 void handle_projectile_collision(Entity *self, Entity *other,Vector2D kick){
-	self->damage(self, other->attackdmg,kick);
 	if (self->type == ES_Projectile){
 		if (self->proj_data.destroyOnCollision){
 			set_to_zero_ent(self->Ent_ID);
 		}
 	}
+	else
+		self->damage(self, other->attackdmg, kick);
 }
 
 void handle_hazard_collision(Entity *self, Entity *other, Vector2D kick){
-	
+	if (other->can_attack)
+		self->damage(self, other->attackdmg, kick);
 }
 
 void check_tile_collision(Entity *self, int** tiles){
@@ -222,16 +235,20 @@ void check_tile_ahead(Entity* self, int** tiles){
 
 
 void handle_item_collision(Entity *self, Entity *other){
-	switch (other->itemType){
-	case I_Health:{
-					  self->health += other->health;
-	}break;
-	case I_Bolt:{
-					self->bolts += other->health;
-	}break;
-	case I_Energy:{
-					  self->energy += other->health;
-	}break;
+	if (self->type == ES_Player){
+		switch (other->itemType){
+		case I_Health:{
+						  self->health += other->health;
+		}break;
+		case I_Bolt:{
+						self->bolts += other->health;
+		}break;
+		case I_Energy:{
+						  self->energy += other->health;
+		}break;
+		}
 	}
-	set_to_zero_ent(other->Ent_ID);
+	else{
+		set_to_zero_ent(self->Ent_ID);
+	}
 }

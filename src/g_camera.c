@@ -16,8 +16,8 @@ void set_bounds(Camera* cam, Vector2D topLeftBounds, Vector2D bottomRightBounds)
 	cam->bottomRightBounds = bottomRightBounds;
 }
 void update_camera(Camera* cam){
-	cam->position.x = cam->target->position.x - 180;
-	cam->position.y = cam->target->position.y - 80;
+	cam->position.x = cam->target->position.x - cam->viewWidth/2;
+	cam->position.y = cam->target->position.y - cam->viewHeight / 2;
 	if (cam->position.x < cam->topLeftBounds.x){
 		cam->position.x = cam->topLeftBounds.x;
 	}

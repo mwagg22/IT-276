@@ -1,20 +1,22 @@
 #include "g_rollerenemy.h"
 #include "simple_logger.h"
+#include "g_effects.h"
+#include "g_item.h"
 #include <math.h>
 void rollerenemy_think(Entity *self){
 	if (self->state != ES_Dead){
-		float attack_range = 50.0;
+		float attack_range = 200.0;
 		Entity *target = get_player_entity();
-		//slog("think");
+		////slog("think");
 		if (target->_inuse){
 			if (vector2d_magnitude_between(target->position, self->position) > attack_range){
 				self->action = none;
-				//slog("not in range");
+				////slog("not in range");
 			}
 			else{
-				//slog("in range");
+				////slog("in range");
 				int rdm = (rand() % 11);
-				if (rdm < 8)
+				if (rdm < 2)
 					self->action = attack;
 				else
 					self->action = none;
@@ -51,7 +53,7 @@ void rollerenemy_attack(Entity *self){
 	switch (self->attacknum){
 	case(0) :
 		if (self->is_grounded == true){
-			//slog("roller attack");
+			////slog("roller attack");
 			self->actionFrame = 120;
 			self->can_attack = false;
 			self->in_action = true;
@@ -69,18 +71,18 @@ void update_rollerenemy_sprite(Entity *self){
 	switch (self->state){
 
 	case(ES_Idle) : {
-						//slog("idle time");
+						////slog("idle time");
 
 						self->frame = 0;
 						self->sprite = self->sprite_list.idle;
 	}break;
 	case(ES_Jump) : {
-						//slog("jump roller time");
+						////slog("jump roller time");
 						self->frame = 0;
 						self->sprite = self->sprite_list.idle;
 	}break;
 	case(ES_Attacking) : {
-							 //slog("roller time");
+							 ////slog("roller time");
 							 self->frame = 0;
 							 self->sprite = self->sprite_list.attack1;
 	}break;
@@ -93,7 +95,24 @@ void update_rollerenemy_sprite(Entity *self){
 }
 void update_rollerenemy_ent(Entity *self){
 	self->frame += 0.1;
-	//self->think(self);
+	if (self->health <= 0){
+		//slog("im ded");
+		if (self->state != ES_Dead){
+			self->state = ES_Dead;
+			self->onDeath(self);
+			self->color = vector4d(255, 255, 255, 0);
+			
+		}
+		return;
+	}
+	self->think(self);
+	if (self->damageFrame > 0){
+		self->damageFrame--;
+		if (self->damageFrame % 3 == 1)
+			self->color = vector4d(255, 255, 255, 0);
+		else
+			self->color = vector4d(255, 255, 255, 255);
+	}
 	int dir = 1;
 	switch (self->dir){
 	case(Right) :
@@ -145,9 +164,9 @@ void init_rollerenemy_ent(Entity *self, int ctr){
 	self->position = vector2d(100, 500);
 	self->start_position = self->position;
 	self->color = vector4d(255, 255, 255, 200);
-	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/shooter/shooter_idle.png", 32, 32, 3);
+	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/roller/roller_idle.png", 32, 32, 1);
 	self->sprite_list.dying = gf2d_sprite_load_all("../images/test/enemy/shooter/shooter_dying.png", 32, 32, 1);
-	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/shooter/shooter_shoot.png", 32, 32, 3);
+	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/roller/roller_attack.png", 32, 32, 3);
 	self->think = rollerenemy_think;
 	self->movementspeed = 1;
 	self->dashspeed = 3;
@@ -166,8 +185,12 @@ void init_rollerenemy_ent(Entity *self, int ctr){
 	self->attack = rollerenemy_attack;
 	set_hitbox(self, self->position.x, self->position.y, 32, 32, 0, 0);
 	self->action = none;
+	self->damage = rollerenemy_damage;
 	self->update_ent = update_rollerenemy_ent;
 	self->sprite = self->sprite_list.idle;
+	self->onDeath = rollerenemy_death;
+	self->health = 10;
+	self->healthmax = 10;
 }
 void rollerenemy_set_position(Entity *self, Vector2D position){
 	self->position = position;
@@ -175,4 +198,18 @@ void rollerenemy_set_position(Entity *self, Vector2D position){
 void rollerenemy_displacement(Entity *self, Vector2D position){
 	self->position.x += position.x;
 	self->position.y += position.y;
+}
+void rollerenemy_damage(Entity *self, int damage,Vector2D kick){
+	self->health -= damage;
+	self->damageFrame = 60;
+}
+void rollerenemy_death(Entity* self){
+	create_effect(vector2d(self->position.x + self->hitbox.w / 2 - 5, self->position.y), 0, -1);
+	int rdm = (rand() % 11);
+	if (rdm < 2)
+		create_item(I_Energy, 6, 300, vector2d(self->position.x + self->hitbox.w / 2, self->position.y));
+	else if (rdm>2 && rdm<5)
+		create_item(I_Health, 6, 300, vector2d(self->position.x + self->hitbox.w / 2, self->position.y));
+	else if (rdm>5 && rdm<9)
+		create_item(I_Bolt, 6, 300, vector2d(self->position.x + self->hitbox.w / 2, self->position.y));
 }

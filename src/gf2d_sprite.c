@@ -81,6 +81,8 @@ Sprite *gf2d_sprite_new()
         if ((sprite_manager.sprite_list[i].ref_count == 0)&&(sprite_manager.sprite_list[i].texture == NULL))
         {
             sprite_manager.sprite_list[i].ref_count = 1;//set ref count
+			sprite_manager.sprite_list[i].sprite_offsetx = 0;
+			sprite_manager.sprite_list[i].sprite_offsety = 0;
             return &sprite_manager.sprite_list[i];//return address of this array element        }
         }
     }
@@ -91,6 +93,8 @@ Sprite *gf2d_sprite_new()
         {
             gf2d_sprite_delete(&sprite_manager.sprite_list[i]);// clean up the old data
             sprite_manager.sprite_list[i].ref_count = 1;//set ref count
+			sprite_manager.sprite_list[i].sprite_offsetx = 0;
+			sprite_manager.sprite_list[i].sprite_offsety = 0;
             return &sprite_manager.sprite_list[i];//return address of this array element
         }
     }
@@ -237,7 +241,7 @@ void gf2d_sprite_draw(
         r.y *= scaleFactor.y;
     }
     if (flip)
-    {
+	{
         if (flip->x)flipFlags |= SDL_FLIP_HORIZONTAL;
         if (flip->y)flipFlags |= SDL_FLIP_VERTICAL;
     }
@@ -262,8 +266,8 @@ void gf2d_sprite_draw(
         sprite->frame_h);
     gfc_rect_set(
         target,
-        position.x - offset.x - (scaleFactor.x * scaleOffset.x),
-        position.y - offset.y - (scaleFactor.y * scaleOffset.y),
+		position.x - offset.x - sprite->sprite_offsetx - (scaleFactor.x * scaleOffset.x),
+		position.y - offset.y - sprite->sprite_offsety - (scaleFactor.y * scaleOffset.y),
         sprite->frame_w * scaleFactor.x,
         sprite->frame_h * scaleFactor.y);
     SDL_RenderCopyEx(gf2d_graphics_get_renderer(),

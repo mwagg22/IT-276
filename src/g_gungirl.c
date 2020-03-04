@@ -1,6 +1,7 @@
 #include "g_gungirl.h"
 #include "simple_logger.h"
-
+#include "g_projectile.h"
+#include <math.h>
 SDL_Event event;
 float dx_a, dy_a = 0;
 Actioninput prev_action_a = none;
@@ -49,42 +50,24 @@ void gungirl_think(Entity *self){
 
 }
 void gungirl_attack(Entity *self){
-	switch (self->attacknum){
-	case(0) :
-		if (self->is_grounded == true){
-			if (self->is_dashing == true){
-				//dashing shoot
-			}
-			else{
-				//grounded shoot
-			}
+	if (self->weapons_list.currentWeapon == 0){
+		switch (self->attacknum){
+		case(0) :
+		{
+					create_gungirl_projectile(self, 3, self->attackdmg, self->attacknum);
 		}
-		else{
-			//in air shoot
+				//fire gun
+				break;
+		case(1) :
+			//fire stronger gun?
+		{
+					create_gungirl_projectile(self, 3, self->attackdmg * 2, self->attacknum);
 		}
-		//fire gun
-		break;
-	case(1) :
-		//fire stronger gun?
-		if (self->is_grounded == true){
-			if (self->is_dashing == true){
-				//dashing shoot
-			}
-			else{
-				//grounded shoot
-			}
+				break;
 		}
-		else{
-			//in air shoot
-		}
-		//fire gun
-		break;
-	case(2) :
-		//fire stronger gun?
-		break;
-	default:
-		//nothing?
-		break;
+	}
+	else{
+		create_gungirl_projectile(self, 3, self->attackdmg * 2, self->weapons_list.currentWeapon+1);
 	}
 }
 void gungirl_special(Entity *self){
@@ -185,6 +168,7 @@ void update_gungirl_sprite(Entity *self){
 			self->sprite = self->sprite_list.idleAttack;
 			//run attack
 			//slog("attacking");
+			self->attack(self);
 			self->in_attack = true;
 			self->can_attack = false;
 			self->frame = 0;
@@ -206,6 +190,7 @@ void update_gungirl_sprite(Entity *self){
 						   else if (self->attack_trigger == true && self->can_attack == true && self->heldFrame < 9){
 							   self->frame = 0;
 							   self->sprite = self->sprite_list.runAttack;
+							   self->attack(self);
 							   //run attack
 							   //slog("attacking dos");
 							   self->in_attack = true;
@@ -234,6 +219,7 @@ void update_gungirl_sprite(Entity *self){
 							//self->frame=frame;
 						}
 						else if (self->attack_trigger == true && self->can_attack == true && self->heldFrame < 9){
+							self->attack(self);
 							if (!self->is_wall_sliding){
 								self->frame = 0;
 								self->sprite = self->sprite_list.jumpAttack;
@@ -272,9 +258,10 @@ void update_gungirl_sprite(Entity *self){
 							}
 							//self->frame=frame;
 						}
-						else if (self->attack_trigger == true && self->can_attack == true){
+						else if (self->attack_trigger == true && self->can_attack == true && self->heldFrame < 9){
 							self->frame = 0;
 							self->sprite = self->sprite_list.dashAttack;
+							self->attack(self);
 							//run attack
 							//slog("dash attack");
 							self->in_attack = true;
@@ -309,6 +296,25 @@ void update_gungirl_ent(Entity *self){
 		else
 			self->color = vector4d(255, 255, 255, 255);
 	}
+	if (self->is_held == true){
+		self->heldFrame++;
+	}
+	//slog("position %f,%f", self->position.x, self->position.y);
+	//slog("current weapon %i", self->weapons_list.currentWeapon);
+	//if (self->heldFrame > 9){
+	//	if (self->heldFrame < 120){
+	//		if (self->heldFrame % 9 == 1)
+	//			self->color = vector4d(255, 255, 255, 0);
+	//		else
+	//			self->color = vector4d(255, 255, 255, 255);
+	//	}
+	//	else{
+	//		if (self->heldFrame % 3 == 1)
+	//			self->color = vector4d(255, 255, 255, 0);
+	//		else
+	//			self->color = vector4d(255, 255, 255, 255);
+	//	}
+	//}
 	update_hitbox_position(self);
 	switch (self->dir){
 	case(Right) :
@@ -359,18 +365,18 @@ void update_gungirl_ent(Entity *self){
 			self->update_sprite(self);
 		}
 	}
-	if (self->is_held == true){
-		self->heldFrame++;
-	}
+	
 	if (self->jumped){
 		self->in_air++;
 	}
+
 	//end frames
 	if (self->frame > self->sprite->frames_per_line - 1){
 		if (self->in_attack){
 			self->can_attack = true;
 			self->in_attack = false;
 			////slog("done");
+			self->attacknum = 0;
 			self->update_sprite(self);
 		}
 		if (self->sprite == self->sprite_list.hit){
@@ -425,10 +431,18 @@ void init_gungirl_ent(Entity *self, int ctr){
 	self->in_air = 0;
 	self->invincibleFrame = 0;
 	self->action = none;
+	self->attacknum = 0;
+	self->attack = gungirl_attack;
 	set_hitbox(self, self->position.x, self->position.y, 24, 24,4,3);
 	self->update_ent = update_gungirl_ent;
 	self->sprite = self->sprite_list.idle;
 	self->damage = gungirl_damage;
+	self->weapons_list.weaponsList = (int*)gfc_allocate_array(sizeof(int), 4);
+	memset(self->weapons_list.weaponsList, -1, sizeof(int)* 4);
+	self->weapons_list.weaponsList[0] = 1;
+	self->weapons_list.currentWeapon = 0;
+	self->getPowerUp = gungirl_get_ability;
+	self->attackdmg = 3;
 }
 void gungirl_set_position(Entity *self, Vector2D position){
 	self->position = position;
@@ -495,9 +509,6 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 				self->dashFrame++;
 			}
 		}
-		if (keys[SDL_SCANCODE_W]){
-			self->action = special;
-		}
 
 		//single button events
 		while (SDL_PollEvent(&event))
@@ -519,6 +530,23 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 								 }
 				}
 					break;
+				case SDLK_w:{
+								if (self->weapons_list.currentWeapon == 3){
+									self->weapons_list.currentWeapon = 0;
+								}
+								else{
+									for (int i = self->weapons_list.currentWeapon; i<=3; i++){
+										if (self->weapons_list.weaponsList[i + 1]>-1){
+											self->weapons_list.currentWeapon = i + 1;
+											return;
+										}
+										if(i==3){
+											self->weapons_list.currentWeapon = 0;
+											return;
+										}
+									}
+								}
+				}break;
 				}break;
 			case SDL_KEYUP:
 
@@ -529,7 +557,13 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 								self->is_held = false;
 								if (self->heldFrame > 60){
 									//fire different type of attack
-									slog("big pew");
+									//slog("big pew");
+									if (self->can_attack){
+										self->attack_trigger = true;
+										self->attacknum = 1;
+										self->heldFrame = 0;
+										self->update_sprite(self);
+									}
 								}
 								self->attack_trigger = false;
 								//update attack frames
@@ -593,4 +627,70 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 			self->think(self);
 	}
 }
-//void create_gungirl_projectile(Entity *self, float speed, float dmg, int type);
+
+void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
+	Entity *projectile = gf2d_entity_new();
+	Projectiles proj;
+	projectile->attackdmg = dmg;
+	proj.parentType = ES_Player;
+	init_projectile_ent(projectile,-1);
+	
+	int dir = (self->dir == Right) ? 1 : -1;
+	if (self->is_wall_sliding)
+		dir*=-1;
+	switch (type){
+	case 0:{
+			   proj.direction = vector2d(dir*speed*1, 0);
+			   proj.destroyOnCollision = true;
+			   proj.aliveFrame = -1;
+			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/lemon.png", 8, 5, 1);	
+			   slog("set");
+			   projectile->position.x = (dir==1)?self->position.x + self->hitbox.offsetx + self->hitbox.w:self->position.x + self->hitbox.offsetx-3;
+			   projectile->position.y = self->position.y + self->hitbox.offsety + 7;
+			   set_hitbox(projectile, projectile->position.x, projectile->position.y, 8, 5, 0, 0);
+			   projectile->proj_data = proj;
+	}break;
+	case 1:{ slog("bigger pew");
+		proj.direction = vector2d(dir*speed * 1, 0);
+		proj.destroyOnCollision = true;
+		proj.aliveFrame = -1;
+		projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/big_blast.png", 31, 30, 5);
+		if (!(self->is_wall_sliding))
+			projectile->flip = self->flip;
+		else{
+			projectile->flip.y = 0;
+			if (dir==1)
+				projectile->flip.x = 0;
+			else
+				projectile->flip.x = 1;
+		}
+		projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w-7 : self->position.x + self->hitbox.offsetx - 3;
+		projectile->position.y = self->position.y + self->hitbox.offsety-3 ;
+		set_hitbox(projectile, projectile->position.x, projectile->position.y, 31, 30, 0, 0);
+		projectile->proj_data = proj;
+	}break;
+	case 2:{ slog("fire pew");
+		proj.direction = vector2d(dir*speed * 1, 0);
+		proj.destroyOnCollision = true;
+		proj.aliveFrame = -1;
+		projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/fire_weapon.png", 24, 24, 2);
+		if (!(self->is_wall_sliding))
+			projectile->flip = self->flip;
+		else{
+			projectile->flip.y = 0;
+			if (dir == 1)
+				projectile->flip.x = 0;
+			else
+				projectile->flip.x = 1;
+		}
+		projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w - 7 : self->position.x + self->hitbox.offsetx - 3;
+		projectile->position.y = self->position.y + self->hitbox.offsety - 3;
+		set_hitbox(projectile, projectile->position.x, projectile->position.y, 24, 24, 0, 0);
+		projectile->proj_data = proj;
+	}break;
+	}
+}
+
+void gungirl_get_ability(Entity* self, int index){
+	self->weapons_list.weaponsList[index] = 35;
+}

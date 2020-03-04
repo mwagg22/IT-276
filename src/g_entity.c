@@ -78,6 +78,15 @@ void gf2d_entity_free(Entity *self)
     }
 }
 
+void gf2d_clear_entity_manager(){
+	for (int i = 0; i < gf2d_entity_manager.entity_max; i++)
+	{
+		if (gf2d_entity_manager.entity_list[i]._inuse){
+			set_to_zero_ent(i);
+		}
+	}
+}
+
 Entity *gf2d_return_list(){
 	return gf2d_entity_manager.entity_list;
 }
@@ -95,12 +104,26 @@ void draw_entities(Camera* cam){
 				&gf2d_entity_manager.entity_list[i].flip,
 				&gf2d_entity_manager.entity_list[i].color,
 				(int)gf2d_entity_manager.entity_list[i].frame);
-			//slog("position at i:%f,%f", gf2d_entity_manager.entity_list[i].position.x, gf2d_entity_manager.entity_list[i].position.y);
+
 			//check within bounds
-			//update entities			
+			//update entities	
+			update_entity(&gf2d_entity_manager.entity_list[i]);
+			entity_in_bounds(&gf2d_entity_manager.entity_list[i], cam);
 		}
 	}
-	collision_check(gf2d_entity_manager.entity_list, 2);
+	collision_check(gf2d_entity_manager.entity_list, gf2d_entity_manager.entity_max);
+}
+
+void update_entity(Entity *self){
+		self->update_ent(self);
+}
+
+void entity_tile_collision(int** tiles){
+	for (int i = 0; i < gf2d_entity_manager.entity_max; i++){
+		if (gf2d_entity_manager.entity_list[i]._inuse){
+			check_tile_ahead(&gf2d_entity_manager.entity_list[i], tiles);
+		}
+	}
 }
 
 Entity *get_player_entity(){
@@ -112,6 +135,22 @@ Entity *get_player_entity(){
 }
 
 void entity_in_bounds(Entity* self, Camera *cam){
+	if (self->type == ES_Player){
+		//might restart or go into death animation
+		return;
+	}
+	if (self->type == ES_Projectile||self->type==ES_Effect){
+		if (!vector_in_camera_bounds(cam, self->position)){
+			set_to_zero_ent(self->Ent_ID);
+			return;
+		}
+	}
+	if (self->type == ES_Hazard){
+		if (!vector_in_camera_bounds(cam, self->position)){
+			respawn(self);
+			return;
+		}
+	}
 	if (!vector_in_camera_bounds(cam, self->start_position)){
 		if (!in_camera_bounds(cam, self)||self->state==ES_Dead){
 			respawn(self);
