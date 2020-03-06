@@ -34,7 +34,8 @@ typedef enum
 	ES_Warp = 9,
 	ES_Pickup = 10,
 	ES_Hazard = 11,
-	ES_Menu=12
+	ES_Menu=12,
+	ES_Transition=13
 }EntityType;
 #endif
 

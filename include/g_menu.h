@@ -1,6 +1,9 @@
 #include "gf2d_sprite.h"
 #include "g_entity.h"
 
+#ifndef menu_s
+#define menu_s
+
 typedef struct main_menu_s{
 	Entity* cursor;
 	Entity* title;
@@ -10,7 +13,7 @@ typedef struct main_menu_s{
 
 typedef struct select_screen_s{
 	Entity* cursor;
-	Entity* icon_items;
+	Entity** icon_items;
 	int select;
 }select_screen;
 
@@ -23,3 +26,5 @@ void get_menu_inputs(main_menu* menu,const Uint8* keys);
 void get_select_inputs(select_screen* select, const Uint8* keys);
 void menu_set_position(Entity *self, Vector2D position);
 void create_menu(Item_type type, int amount, int aliveFrame, Vector2D position);
+
+#endif

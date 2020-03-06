@@ -14,25 +14,18 @@
 #include "g_hazards.h"
 #include "g_menu.h"
 #include "g_game.h"
-#include "simple_json_object.h"
+
 //change based on states
-game_controller *game;
+game_controller *game = {0};
 
 void init_game(){
 	game->menu=init_menu_ent();
-	game->data = (game_data*)malloc(sizeof(game_data));
-	game->data->bossdata = (int*)gfc_allocate_array(sizeof(int), 4);
-	game->data->weapondata = (int*)gfc_allocate_array(sizeof(int), 4);
-	memset(game->data->bossdata, 0, sizeof(int)* 4);
-	memset(game->data->weapondata, 0, sizeof(int)* 4);
 	game->cam=init_camera(NULL, 256, 240, vector2d(0, 0), vector2d(256, 240));
 	game->PreviousState = G_Menu;
 	game->CurrentState = G_Menu;
 	game->controllerEntity = game->menu->cursor;
 	game->transition = false;
-	save_game();
 }
-
 void set_game_state(game_state state,int level){
 	game->PreviousState = game->CurrentState;
 	game->transition = true;
@@ -48,67 +41,23 @@ void set_game_state(game_state state,int level){
 						//load level file n stuff n level entity
 						switch (level){
 						case(0) : {
-								//fireman
-									  game->currentLevel = load_level("../levels/test.json");
+
 						}break;
 						case(1) : {
-								//test
+
 						}break;
 						case(2) : {
-								//metalman
+
 						}break;
 						case(3) : {
-									  //bubbleman
+
 						}break;
 
 						}
-						game->controllerEntity = get_player_entity();
-						set_target(game->cam, game->controllerEntity, 1);
-						set_bounds(game->cam, vector2d(0, 0), vector2d(2000, 750));
 	}break;
 	}
 	game->CurrentState = state;
 	game->transition = false;
-}
-
-void load_save(){
-	//check if file if not return
-	//else read json data and fill in data of game_data
-	SJson *file,*value;
-	file = sj_load("../gamedata.sav");
-	if (file == NULL){
-		slog("file not found");
-		return;
-	}
-	//get boss data and player weapon data
-	value = sj_object_get_value(file, "bossdata");
-
-	game->data->bossdata = sj_array_return(value);
-	sj_echo(value);
-	value = sj_object_get_value(file, "weapondata");
-	sj_echo(value);
-	game->data->weapondata = sj_array_return(value);
-}
-
-void save_game(){
-	SJson *file,*array,*array2,*data;
-	file = sj_object_new();
-	array=sj_array_new();
-	array2 = sj_array_new();
-	
-	for (int i = 0; i < 4; i++){
-		data = sj_new_int(game->data->bossdata[i]);
-		sj_array_append(array, data);
-	}
-	
-	for (int i = 0; i < 4; i++){
-		data = sj_new_int(game->data->weapondata[i]);
-		sj_array_append(array2, data);
-	}
-
-	sj_object_insert(file, "bossdata", array);
-	sj_object_insert(file, "weapondata", array2);
-	sj_save(file, "../gamedata.sav");
 }
 
 game_state return_game_state(){
@@ -123,7 +72,6 @@ void update_game(const Uint8 *keys){
 					   get_select_inputs(game->selectScreen, keys);
 	}break;
 	case(G_Level) : {
-						gungirl_get_inputs(game->controllerEntity,keys);
 						entity_tile_collision(game->currentLevel->tiles);
 						draw_tiles(game->currentLevel, game->cam);
 	}break;

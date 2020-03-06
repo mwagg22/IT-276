@@ -24,11 +24,6 @@ typedef enum {
 	G_Paused = 4
 }game_state;
 
-typedef struct game_data_S{
-	int* bossdata;
-	int* weapondata;
-}game_data;
-
 typedef struct game_states_S{
 	game_state CurrentState;
 	game_state PreviousState;
@@ -37,7 +32,6 @@ typedef struct game_states_S{
 	Level *currentLevel;
 	Entity *controllerEntity;
 	Camera *cam;
-	game_data *data;
 	bool to_draw_entities;
 	bool to_update;
 	bool to_draw_map;
@@ -50,5 +44,4 @@ void set_game_state(game_state state,int level);
 void update_game(Camera *cam, Level *level, const Uint8 *keys);
 game_state return_game_state();
 void load_save();
-void save_game();
 #endif

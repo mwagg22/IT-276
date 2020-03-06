@@ -19,7 +19,8 @@ typedef struct{
 }Level;
 #endif
 
-Level* load_level(char* filename);
+Level* load_level(const char* filename);
+void load_level_entities(SJson* list);
 void draw_tiles(Level* level, Camera* cam);
 int** return_tiles(Level* level);
 int return_level_width(Level* level);

@@ -20,4 +20,5 @@ void move_to_new_position(Camera *cam, Vector2D position);
 Vector2D distance_from_camera(Camera *cam, Entity* target);
 bool in_camera_bounds(Camera *cam, Entity *self);
 bool vector_in_camera_bounds(Camera *cam, Vector2D vector);
+void set_target(Camera* cam, Entity *target, int follow);
 #endif

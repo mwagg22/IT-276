@@ -6,18 +6,34 @@ Camera* init_camera(Entity* target, int viewWidth, int viewHeight, Vector2D topL
 	cam->viewHeight= viewHeight;
 	cam->topLeftBounds = topLeftBounds;
 	cam->bottomRightBounds = bottomRightBounds;
-	cam->target = target;
-	cam->follow = 1;
+	if (target != NULL){
+		cam->target = target;
+		cam->follow = 1;
+	}
+	else{
+		cam->follow = 0;
+		cam->position.x = 0;
+		cam->position.y = 0;
+	}
 	return cam;
 }
-
+void set_target(Camera* cam, Entity *target,int follow){
+	cam->follow = follow;
+	cam->target = target;
+}
 void set_bounds(Camera* cam, Vector2D topLeftBounds, Vector2D bottomRightBounds){
 	cam->topLeftBounds = topLeftBounds;
 	cam->bottomRightBounds = bottomRightBounds;
 }
 void update_camera(Camera* cam){
-	cam->position.x = cam->target->position.x - cam->viewWidth/2;
-	cam->position.y = cam->target->position.y - cam->viewHeight / 2;
+	if (cam->follow == 1){
+		cam->position.x = cam->target->position.x - cam->viewWidth / 2.5;
+		cam->position.y = cam->target->position.y - cam->viewHeight / 2;
+	}
+	else{
+		cam->position.x = cam->position.x;
+		cam->position.y = cam->position.y;
+	}
 	if (cam->position.x < cam->topLeftBounds.x){
 		cam->position.x = cam->topLeftBounds.x;
 	}

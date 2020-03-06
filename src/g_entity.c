@@ -7,6 +7,7 @@
 #include "gfc_matrix.h"
 #include "g_camera.h"
 #include "g_collision.h"
+#include "g_game.h"
 float framechange;
 //float frame;
 typedef struct
@@ -105,13 +106,16 @@ void draw_entities(Camera* cam){
 				&gf2d_entity_manager.entity_list[i].color,
 				(int)gf2d_entity_manager.entity_list[i].frame);
 
+			//slog("cam position %f,%f", cam->position.x, cam->position.y);
 			//check within bounds
 			//update entities	
 			update_entity(&gf2d_entity_manager.entity_list[i]);
-			entity_in_bounds(&gf2d_entity_manager.entity_list[i], cam);
+			//if (return_game_state()==G_Level)
+				entity_in_bounds(&gf2d_entity_manager.entity_list[i], cam);
 		}
 	}
-	collision_check(gf2d_entity_manager.entity_list, gf2d_entity_manager.entity_max);
+	//if (return_game_state() == G_Level)
+		collision_check(gf2d_entity_manager.entity_list, gf2d_entity_manager.entity_max);
 }
 
 void update_entity(Entity *self){
@@ -185,5 +189,9 @@ void flip(Entity *self, Vector2D position){
 	{
 		self->dir = Left;
 	}
+}
+void set_position(Entity *self, Vector2D position){
+	self->position = position;
+	self->start_position = position;
 }
 /*eol@eof*/
