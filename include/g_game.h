@@ -34,21 +34,40 @@ typedef struct game_states_S{
 	game_state PreviousState;
 	main_menu *menu;
 	select_screen *selectScreen;
+	pause_menu *pauseMenu;
 	Level *currentLevel;
 	Entity *controllerEntity;
 	Camera *cam;
 	game_data *data;
+	bool update;
 	bool to_draw_entities;
 	bool to_update;
 	bool to_draw_map;
 	bool transition;
 	bool have_save;
+	bool can_input;
+	bool pause;
+	bool boss_state;
+	int updateType;
+	Vector2D cameraTopBound;
+	Vector2D cameraBottomBound;
+
 }game_controller;
 
 void init_game();
 void set_game_state(game_state state,int level);
-void update_game(Camera *cam, Level *level, const Uint8 *keys);
+void update_game(const Uint8 *keys);
 game_state return_game_state();
 void load_save();
 void save_game();
+game_controller* return_game_controller();
+void update_game_data(char* key, int index, int value);
+void set_input_control(bool control);
+void set_game_camera_bounds(Vector2D leftbounds, Vector2D rightbounds);
+void set_game_camera_start_bounds(Vector2D leftbounds, Vector2D rightbounds);
+void reset_game_camera();
+Camera* get_game_camera();
+void set_update_type(int type);
+void update_boss_state();
+void clear_key();
 #endif

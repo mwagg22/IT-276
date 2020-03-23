@@ -12,3 +12,4 @@ void shooterenemy_displacement(Entity *self, Vector2D position);
 void shooterenemy_damage(Entity *self, int damage, Vector2D kick);
 void create_shooterenemy_projectile(Entity *self, float speed, float dmg, int type);
 void shooterenemy_death(Entity* self);
+void shooterenemy_reset(Entity *self);

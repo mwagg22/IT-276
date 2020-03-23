@@ -14,10 +14,20 @@ typedef enum
 	ES_Dying = 5,
 	ES_Dead = 6,
 	ES_Jump = 7,
-	ES_Dash = 8
+	ES_Dash = 8,
+	ES_Intro = 9,
+	ES_WarpIn = 10,
+	ES_WarpOut=11
 }EntityState;
 #endif
 
+#ifndef Movement_Type
+#define Movement_Type
+typedef enum{
+	M_None = 0,
+	M_Switch=1
+}MovementType;
+#endif
 #ifndef Entity_Type
 #define Entity_Type
 typedef enum
@@ -34,8 +44,17 @@ typedef enum
 	ES_Warp = 9,
 	ES_Pickup = 10,
 	ES_Hazard = 11,
-	ES_Menu=12,
-	ES_Transition=13
+	ES_Menu = 12,
+	ES_Transition = 13,
+	ES_Icon = 14,
+	ES_Ready = 15,
+	ES_Healthbar = 16,
+	ES_Energybar = 17,
+	ES_Bossbar = 18,
+	ES_Boss = 19,
+	ES_Pause_Items = 20,
+	ES_Cursor = 21,
+	ES_BossDoor = 22
 }EntityType;
 #endif
 
@@ -99,6 +118,9 @@ typedef struct sprite_index
 	Sprite *special1;
 	Sprite *special2;
 	Sprite *charge;
+	Sprite *warpIn;
+	Sprite *warpOut;
+	Sprite *intro;
 }sprite_index;
 #endif
 
@@ -121,6 +143,7 @@ typedef struct Projectiles_s
 	int effect;
 	bool destroyOnCollision;
 	int aliveFrame;
+	int heightTime;//how long to stay in air
 	Vector2D direction;
 }Projectiles;
 #endif
@@ -160,6 +183,7 @@ typedef struct Entity_S
 	Item_type		itemType;       //for items
 	Projectiles		proj_data;		//for projectiles
 	Weapons			weapons_list;   //for player
+	MovementType	movement_type;
 	struct health_s*		health_bar;
 	void(*think)(struct Entity_S* self);   /**<function called on entity think*/
 	void(*update_sprite)(struct Entity_S* self);   /**<function called on entity update*/
@@ -167,13 +191,14 @@ typedef struct Entity_S
 	void(*update_ent)(struct Entity *self);
 	void(*move)(struct Entity_S* self);
 	void(*attack)(struct Entity_S* self);
-	void(*block)(struct Entity_S* self);
+	void(*victory)(struct Entity_S* self);
 	void(*special)(struct Entity_S* self, int n);
 	void(*getPowerUp)(struct Entity_S* self, int n);
-	void(*useItem)(struct Entity_S* self);
+	void(*transition_function)(struct Entity_S* self,Dir dir);
 	void(*onDeath)(struct Entity_S* self);
 	void(*get_inputs)(struct Entity *self, const Uint8 * keys, float delta);
 	void(*damage)(struct Entity_S *self, int damage,Vector2D kick);
+	void(*reset)(struct Entity_S* self);
 	int           health;
 	int           healthmax;
 	int           defense;
@@ -200,12 +225,19 @@ typedef struct Entity_S
 	bool			in_attack;//in attaciking state
 	bool			l_wall_collision;//for wall jump, check left and right colliision
 	bool			r_wall_collision;
+	bool upper_wall_collision;
 	bool right_trigger;
 	bool left_trigger;
 	bool is_wall_sliding;
 	bool jumped;
 	bool wall_jumped;
 	bool falling;
+	bool respawn;
+	bool transition;
+	bool active;
+	bool did_intro;
+	bool health_created;
+	Dir transition_dir;
 	int in_air;
 	int				heldFrame; //count number of frames held
 	int				dashFrame;//dash frames
@@ -219,7 +251,8 @@ typedef struct Entity_S
 	void			*data;                     /**<additional entity specific data*/
 	struct Entity_S *target;//for enemies
 	struct Entity_S *parent;//for projectiles
-	Vector2D location;//for warps
+	Vector2D topbounds;//for warps
+	Vector2D bottombounds;//for warps
 }Entity;
 
 
@@ -256,9 +289,21 @@ void update_ent_sprite(Entity *self);
 void update_ent(Entity *self);
 Entity *get_nearest_target(Entity *self, Entity *other);
 void draw_entities(struct Camera_S* cam);
+void draw_ui(struct Camera_S* cam);
+void update_all_entities(int type);
 Entity *get_player_entity();
+Entity *get_boss_entity();
 void respawn(Entity *self);
 void flip(Entity *self, Vector2D position);
 void entity_in_bounds(Entity* self, struct Camera_S *cam);
 void entity_tile_collision(int** tiles);
+void init_ready_ent(Entity* self);
+void update_ready_ent(Entity *self);
+void init_bossdoor_ent(Entity* self,int type);
+void update_bossdoor_ent(Entity *self);
+void reset_bossdoor(Entity* self);
+Entity *get_bar_entity(EntityType type);
+
+//transition
+void init_transition_ent(Entity* self, Vector2D topleft, Vector2D bottomright, Dir dir);
 #endif

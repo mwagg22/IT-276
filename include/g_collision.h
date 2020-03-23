@@ -12,5 +12,7 @@ void handle_collision(Entity *self, Entity *other);
 void handle_hazard_collision(Entity *self, Entity *other, Vector2D kick);
 void check_tile_collision(Entity *self, int** tiles);
 void check_tile_ahead(Entity *self, int** tiles);
+bool check_empty_tile(Entity *self, int**tiles);
 void handle_tile_collision(Entity *self,int x,int y);
 void handle_item_collision(Entity *self, Entity *other);
+void handle_transition_collision(Entity *self, Entity *other);

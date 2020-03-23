@@ -12,3 +12,4 @@ void lookerenemy_displacement(Entity *self, Vector2D position);
 void lookerenemy_damage(Entity *self, int damage, Vector2D kick);
 void create_lookerenemy_projectile(Entity *self, float speed, float dmg, int type);
 void lookerenemy_death(Entity* self);
+void lookerenemy_reset(Entity *self);
