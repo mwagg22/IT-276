@@ -36,6 +36,7 @@ void init_item_ent(Entity *self, Item_type type,int amount,int aliveFrame){
 	self->clip = 1;
 	self->actionFrame = aliveFrame;
 	self->type = ES_Item;
+	self->itemType = type;
 	self->is_grounded = false;
 	self->update_ent = update_item_ent;
 }

@@ -14,6 +14,13 @@ void update_projectile_ent(Entity *self){
 		//destroy self
 		set_to_zero_ent(self->Ent_ID);
 	}
+	if (self->proj_data.heightTime > 0)
+		self->proj_data.heightTime--;
+
+	else if (self->proj_data.heightTime == 0){
+		self->proj_data.direction.y = 0;
+	}
+
 	if (self->clip == 1){
 		if (!self->is_grounded){
 			self->position.y += 1;

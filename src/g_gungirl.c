@@ -1,6 +1,8 @@
 #include "g_gungirl.h"
 #include "simple_logger.h"
 #include "g_projectile.h"
+#include "g_game.h"
+#include "g_music.h"
 #include <math.h>
 SDL_Event event;
 float dx_a, dy_a = 0;
@@ -21,7 +23,7 @@ void gungirl_think(Entity *self){
 		}
 		break;
 	case movement:
-		if (self->action != prev_action_a || self->attack_trigger == true && self->can_attack == true || (self->is_grounded == true && self->sprite == self->sprite_list.idle||self->sprite == self->sprite_list.jump)){
+		if (self->action != prev_action_a || self->attack_trigger == true && self->can_attack == true || (self->is_grounded == true && self->sprite == self->sprite_list.idle || self->sprite == self->sprite_list.jump)){
 			self->update_sprite(self);
 			prev_action_a = self->action;
 		}
@@ -34,7 +36,7 @@ void gungirl_think(Entity *self){
 	}
 		break;
 	case jump:
-		if (self->action != prev_action_a || self->jumpFrame>0){
+		if (self->action != prev_action_a || self->jumpFrame > 0){
 			gungirl_jump(self);
 			self->update_sprite(self);
 			prev_action_a = self->action;
@@ -67,7 +69,7 @@ void gungirl_attack(Entity *self){
 		}
 	}
 	else{
-		create_gungirl_projectile(self, 3, self->attackdmg * 2, self->weapons_list.currentWeapon+1);
+		create_gungirl_projectile(self, 3, self->attackdmg * 2, self->weapons_list.currentWeapon + 1);
 	}
 }
 void gungirl_special(Entity *self){
@@ -97,18 +99,22 @@ void gungirl_special(Entity *self){
 void gungirl_dash(Entity *self){
 	self->is_dashing = true;
 	self->state = ES_Dash;
-	if (self->dashFrame < 30){
+	if (self->dashFrame < 50){
 		if (self->dir == Right){
 			if (!self->r_wall_collision)
 				gungirl_displacement(self, vector2d(self->dashspeed, 0));
-			else
+			else{
 				gungirl_displacement(self, vector2d(0, 0));
+				self->dashFrame = 50;
+			}
 		}
 		else{
 			if (!self->l_wall_collision)
 				gungirl_displacement(self, vector2d(-self->dashspeed, 0));
-			else
+			else{
 				gungirl_displacement(self, vector2d(0, 0));
+				self->dashFrame = 50;
+			}
 		}
 	}
 	else{
@@ -130,53 +136,52 @@ void gungirl_jump(Entity *self){
 			gungirl_displacement(self, vector2d(0, -4));
 		}
 		else{
-			//if (self->jumpFrame > 4){
 			self->wall_jumped = true;
-				if (self->dir == Right){
-					self->is_grounded = false;
-					self->state = ES_Jump;
-					gungirl_displacement(self, vector2d(-20, -10));
-				}
-				else{
-					self->is_grounded = false;
-					self->state = ES_Jump;
-					gungirl_displacement(self, vector2d(20, -10));
-				}
-			//}
+			if (self->dir == Right){
+				self->is_grounded = false;
+				self->state = ES_Jump;
+				gungirl_displacement(self, vector2d(-19, -3));
+			}
+			else{
+				self->is_grounded = false;
+				self->state = ES_Jump;
+				gungirl_displacement(self, vector2d(19, -3));
+			}
 		}
 	}
 }
-void gungirl_damage(Entity *self, int damage,Vector2D kick){
+void gungirl_damage(Entity *self, int damage, Vector2D kick){
 	self->health -= damage;
 	self->state = ES_Hit;
 	self->update_sprite(self);
 	gungirl_displacement(self, kick);
+	play_soundeffect("../sounds/damage.wav", 0);
 }
 void update_gungirl_sprite(Entity *self){
 	switch (self->state){
 
 	case(ES_Idle) : {//slog("idle time");
-		if (self->in_attack == true){
-			if (self->sprite != self->sprite_list.idleAttack){
-				self->frame = 1;
-				//slog("idle attack");
-				self->sprite = self->sprite_list.idleAttack;
-			}
-			//self->frame=frame;
-		}
-		else if (self->attack_trigger == true && self->can_attack == true && self->heldFrame < 9){
-			self->sprite = self->sprite_list.idleAttack;
-			//run attack
-			//slog("attacking");
-			self->attack(self);
-			self->in_attack = true;
-			self->can_attack = false;
-			self->frame = 0;
-		}
-		else{
-			self->frame = 0;
-			self->sprite = self->sprite_list.idle;
-		}
+						if (self->in_attack == true){
+							if (self->sprite != self->sprite_list.idleAttack){
+								self->frame = 1;
+								//slog("idle attack");
+								self->sprite = self->sprite_list.idleAttack;
+							}
+							//self->frame=frame;
+						}
+						else if (self->attack_trigger == true && self->can_attack == true && self->heldFrame < 9){
+							self->sprite = self->sprite_list.idleAttack;
+							//run attack
+							//slog("attacking");
+							self->attack(self);
+							self->in_attack = true;
+							self->can_attack = false;
+							self->frame = 0;
+						}
+						else{
+							self->frame = 0;
+							self->sprite = self->sprite_list.idle;
+						}
 	}break;
 	case(ES_Running) : {
 						   if (self->in_attack == true){
@@ -238,7 +243,7 @@ void update_gungirl_sprite(Entity *self){
 								self->is_wall_sliding = true;
 							}
 						}
-						else if ((self->left_trigger&&self->l_wall_collision && ((self->in_air>20) || self->falling == true)) || (self->right_trigger&&self->r_wall_collision && ((self->in_air>20) || self->falling == true))){
+						else if ((self->left_trigger&&self->l_wall_collision && ((self->in_air > 20) || self->falling == true)) || (self->right_trigger&&self->r_wall_collision && ((self->in_air > 20) || self->falling == true))){
 							self->frame = 0;
 							self->sprite = self->sprite_list.wallSlide;
 							self->is_wall_sliding = true;
@@ -274,20 +279,56 @@ void update_gungirl_sprite(Entity *self){
 							self->sprite = self->sprite_list.dash;
 						}
 	}break;
-	case(ES_Dying) : {
-						 self->sprite = self->sprite_list.dying;
+	case(ES_Dead) : {
+						self->sprite = self->sprite_list.dying;
 	}break;
 	case(ES_Hit) : {
-						 //slog("hit");
-					     self->frame = 0;
-						 self->invincibleFrame = 240;
-						 self->sprite = self->sprite_list.hit;
+					   //slog("hit");
+					   self->frame = 0;
+					   self->invincibleFrame = 240;
+					   self->sprite = self->sprite_list.hit;
+	}break;
+	case(ES_WarpIn) : {
+						  //slog("hit");
+						  //self->frame = 0;
+						  self->sprite = self->sprite_list.warpIn;
+	}break;
+	case(ES_WarpOut) : {
+						   //slog("hit");
+						   //self->frame = 0;
+						   self->sprite = self->sprite_list.warpOut;
+						   play_soundeffect("../sounds/warp.wav", 0);
 	}break;
 	}
 
 
 }
+void gungirl_transition(Entity *self){
+	if (self->transition){
+		switch (self->transition_dir){
+		case(Right) : {
+						  self->position.x += .5;
+		}break;
+		case(Left) : {
+						 self->position.x -= .5;
+		}break;
+		case(Up) : {
+					   self->position.y -= .4;
+		}break;
+		case(Down) : {
+						 self->position.y += .4;
+		}break;
+		}
+	}
+	else
+		return;
+}
 void update_gungirl_ent(Entity *self){
+
+	if (self->transition){
+		gungirl_transition(self);
+		return;
+	}
 	self->frame += 0.1;
 	if (self->invincibleFrame > 0){
 		self->invincibleFrame--;
@@ -299,22 +340,35 @@ void update_gungirl_ent(Entity *self){
 	if (self->is_held == true){
 		self->heldFrame++;
 	}
+	if (self->upper_wall_collision){
+		self->jumpFrame = 20;
+		slog("upper wall collision");
+	}
+	if (self->actionFrame > 0)
+		self->actionFrame--;
+	if (self->health > 27)
+		self->health = 27;
+	if (self->health <= 0)
+	{
+		if (self->state != ES_Dead)
+			self->onDeath(self);
+	}
 	//slog("position %f,%f", self->position.x, self->position.y);
 	//slog("current weapon %i", self->weapons_list.currentWeapon);
-	//if (self->heldFrame > 9){
-	//	if (self->heldFrame < 120){
-	//		if (self->heldFrame % 9 == 1)
-	//			self->color = vector4d(255, 255, 255, 0);
-	//		else
-	//			self->color = vector4d(255, 255, 255, 255);
-	//	}
-	//	else{
-	//		if (self->heldFrame % 3 == 1)
-	//			self->color = vector4d(255, 255, 255, 0);
-	//		else
-	//			self->color = vector4d(255, 255, 255, 255);
-	//	}
-	//}
+	if (self->heldFrame > 30){
+		if (self->heldFrame < 120){
+			if (self->heldFrame % 9 == 1)
+				self->color = vector4d(255, 255, 255, 0);
+			else
+				self->color = vector4d(255, 255, 255, 255);
+		}
+		else{
+			if (self->heldFrame % 3 == 1)
+				self->color = vector4d(255, 255, 255, 0);
+			else
+				self->color = vector4d(255, 255, 255, 255);
+		}
+	}
 	update_hitbox_position(self);
 	switch (self->dir){
 	case(Right) :
@@ -328,9 +382,39 @@ void update_gungirl_ent(Entity *self){
 	}
 	if (self->state == ES_Hit){
 		//turn everthing off;
-		
+
+	}
+	if (self->falling){
+		self->maxjump = 0;
+	}
+	if (self->clip != 0){
+		if (self->position.y < get_game_camera()->topLeftBounds.y)
+			self->position.y = get_game_camera()->topLeftBounds.y;
+		if (self->position.x<get_game_camera()->topLeftBounds.x)
+			self->position.x = get_game_camera()->topLeftBounds.x;
+	}
+	if (self->state == ES_WarpOut){
+		if (self->frame > 2){
+			self->position.y -= 2;
+			self->clip = 0;
+			self->frame = 2;
+		}
+		//if outside bounds go to select screen/victory screen
+		if (!in_camera_bounds(get_game_camera(), self)){
+			clear_key();
+			set_input_control(1);
+			set_game_state(G_BossSelect, 0);
+			return;
+		}
 	}
 	if (!self->is_grounded){
+		if (self->state == ES_WarpIn){
+			if (self->sprite != self->sprite_list.warpIn){
+				self->update_sprite(self);
+			}
+			if (self->frame > 0)
+				self->frame = 0;
+		}
 		if (self->is_wall_sliding == false){
 			if (self->state != ES_Dash){
 				self->position.y += 1.5;  //might change to gravity
@@ -342,18 +426,18 @@ void update_gungirl_ent(Entity *self){
 			self->velocity.y += .5;
 			//slog("wall sliding");
 		}
-		if (self->state != ES_Hit){
-			if (self->sprite != self->sprite_list.jump || self->sprite != self->sprite_list.jumpAttack || self->sprite != self->sprite_list.wallSlide || self->sprite != self->sprite_list.wallAttack){
+		if (self->state != ES_Hit && self->state != ES_WarpIn &&self->state != ES_Dash){
+			if (self->sprite != self->sprite_list.warpOut || self->sprite != self->sprite_list.warpIn || self->sprite != self->sprite_list.jump || self->sprite != self->sprite_list.jumpAttack || self->sprite != self->sprite_list.wallSlide || self->sprite != self->sprite_list.wallAttack){
 				self->state = ES_Jump;
 				//slog("To jump");
 				self->update_sprite(self);
 			}
 		}
 	}
-	if (self->state==ES_Hit||!self->left_trigger&&self->l_wall_collision || self->left_trigger&&!self->l_wall_collision || !self->right_trigger && self->r_wall_collision || self->right_trigger && !self->r_wall_collision||!self->r_wall_collision&&!self->l_wall_collision){
+	if (self->state == ES_Hit || !self->left_trigger&&self->l_wall_collision || self->left_trigger&&!self->l_wall_collision || !self->right_trigger && self->r_wall_collision || self->right_trigger && !self->r_wall_collision || !self->r_wall_collision&&!self->l_wall_collision){
 		self->is_wall_sliding = false;
 	}
-	if(self->is_grounded){
+	if (self->is_grounded){
 		self->jumped = false;
 		self->is_wall_sliding = false;
 		self->falling = false;
@@ -364,35 +448,70 @@ void update_gungirl_ent(Entity *self){
 			self->state = ES_Idle;
 			self->update_sprite(self);
 		}
+		if (self->state == ES_WarpIn){
+			self->start_position = self->position;
+			if (self->frame > 0.0&&self->frame<.2)
+				play_soundeffect("../sounds/warp.wav", 0);
+		}
 	}
-	
+
 	if (self->jumped){
 		self->in_air++;
 	}
 
 	//end frames
 	if (self->frame > self->sprite->frames_per_line - 1){
-		if (self->in_attack){
-			self->can_attack = true;
-			self->in_attack = false;
-			////slog("done");
-			self->attacknum = 0;
-			self->update_sprite(self);
-		}
-		if (self->sprite == self->sprite_list.hit){
-			self->state = ES_Idle;
-			self->frame = 0;
-			self->update_sprite(self);
+		if (self->actionFrame <= 0){
+			if (return_game_controller()->boss_state == false){
+				self->state = ES_WarpOut;
+				self->frame = 0;
+				self->update_sprite(self);
+			}
+			if (self->state == ES_WarpOut){
+				self->frame = self->sprite->frames_per_line - 1;
+			}
+			if (self->state == ES_WarpIn){
+				self->state = ES_Idle;
+				self->frame = 0;
+				self->update_sprite(self);
+			}
+			if (self->in_attack){
+				self->can_attack = true;
+				self->in_attack = false;
+				////slog("done");
+				self->attacknum = 0;
+				self->update_sprite(self);
+			}
+			if (self->sprite == self->sprite_list.hit){
+				self->state = ES_Idle;
+				self->frame = 0;
+				self->update_sprite(self);
+			}
+			if (self->state == ES_Dead){
+				self->frame = self->sprite->frames_per_line - 1;
+				self->state = ES_Idle;
+				self->update_sprite(self);
+				respawn(self);
+			}
+			else{
+				self->frame = 0;
+				//slog("looping");
+			}
 		}
 		else{
-			self->frame = 0;
-			//slog("looping");
+			if (self->state == ES_Dead){
+				self->frame = self->sprite->frames_per_line;
+
+			}
+			else{
+				self->frame = 0;
+			}
 		}
 	}
 
 }
 void init_gungirl_ent(Entity *self, int ctr){
-	self->state = ES_Idle;
+	self->state = ES_WarpIn;
 	//self->update_sprite = update_gungirl_sprite;
 	self->controlling = ctr;
 	self->frame = 0;
@@ -410,11 +529,17 @@ void init_gungirl_ent(Entity *self, int ctr){
 	self->sprite_list.jumpAttack = gf2d_sprite_load_all("../images/test/jumpAttack.png", 32, 32, 3);
 	self->sprite_list.dashAttack = gf2d_sprite_load_all("../images/test/dashAttack.png", 32, 32, 3);
 	self->sprite_list.hit = gf2d_sprite_load_all("../images/test/hit.png", 32, 32, 8);
+	self->sprite_list.warpIn = gf2d_sprite_load_all("../images/test/warpIn.png", 32, 32, 3);
+	self->sprite_list.warpOut = gf2d_sprite_load_all("../images/test/warpOut.png", 32, 32, 3);
+	self->sprite_list.dying = gf2d_sprite_load_all("../images/test/effect/boom.png", 56, 56, 15);
+	self->sprite_list.dying->sprite_offsety = 18;
 	//self->sprite_list->special1;
 	self->think = gungirl_think;
 	self->movementspeed = 1;
-	self->dashspeed = 3;
+	self->dashspeed = 1.5;
 	self->maxjump = 1;
+	self->health = 27;
+	self->healthmax = 27;
 	self->update_sprite = update_gungirl_sprite;
 	self->type = ES_Player;
 	self->is_grounded = false;
@@ -428,12 +553,15 @@ void init_gungirl_ent(Entity *self, int ctr){
 	self->jumped = false;
 	self->wall_jumped = false;
 	self->falling = false;
+	self->transition = false;
+	self->upper_wall_collision = false;
 	self->in_air = 0;
 	self->invincibleFrame = 0;
 	self->action = none;
 	self->attacknum = 0;
 	self->attack = gungirl_attack;
-	set_hitbox(self, self->position.x, self->position.y, 24, 24,4,3);
+	self->transition_function = gungirl_transition;
+	set_hitbox(self, self->position.x, self->position.y, 24, 24, 4, 3);
 	self->update_ent = update_gungirl_ent;
 	self->sprite = self->sprite_list.idle;
 	self->damage = gungirl_damage;
@@ -443,6 +571,11 @@ void init_gungirl_ent(Entity *self, int ctr){
 	self->weapons_list.currentWeapon = 0;
 	self->getPowerUp = gungirl_get_ability;
 	self->attackdmg = 3;
+	self->clip = 1;
+	self->actionFrame = 0;
+	self->victory = gungirl_victory;
+	self->onDeath = gungirl_death;
+	self->reset = gungirl_respawn;
 }
 void gungirl_set_position(Entity *self, Vector2D position){
 	self->position = position;
@@ -453,8 +586,9 @@ void gungirl_displacement(Entity *self, Vector2D position){
 	self->position.y += self->velocity.y;
 }
 void gungirl_get_inputs(Entity *self, const Uint8 * keys){
-	if (self->controlling == 1){
-		////slog("inputs");
+	if (self->controlling == 1 && self->transition == false && self->state != ES_Dead){
+		//slog("inputs");
+		
 		Vector2D velocity;
 		if (self->state != ES_Dash&&self->state != ES_Hit&&self->state != ES_Special){
 			if (keys[SDL_SCANCODE_RIGHT]){
@@ -486,7 +620,7 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 				gungirl_displacement(self, vector2d((dx_a*(self->movementspeed)), 0));
 			}
 			else{
-				gungirl_displacement(self, velocity = vector2d((dx_a*(self->movementspeed)), 0));
+				gungirl_displacement(self, vector2d((dx_a*(self->movementspeed)), 0));
 			}
 		}
 
@@ -495,18 +629,20 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 			self->jumpFrame++;
 		}
 		if (keys[SDL_SCANCODE_D]){
-			if(self->dashFrame>30){
-				self->is_dashing = false;
-				if (self->is_grounded == true){
-					//self->action = none;
+			if (!self->l_wall_collision&&!self->r_wall_collision){
+				if (self->dashFrame > 50){
+					self->is_dashing = false;
+					if (self->is_grounded == true){
+						//self->action = none;
+					}
+					else{
+						self->action = jump;
+					}
 				}
 				else{
-					self->action = jump;
+					self->action = dash;
+					self->dashFrame++;
 				}
-			}
-			else{
-				self->action = dash;
-				self->dashFrame++;
 			}
 		}
 
@@ -535,17 +671,23 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 									self->weapons_list.currentWeapon = 0;
 								}
 								else{
-									for (int i = self->weapons_list.currentWeapon; i<=3; i++){
-										if (self->weapons_list.weaponsList[i + 1]>-1){
+									for (int i = self->weapons_list.currentWeapon; i <= 3; i++){
+										if (self->weapons_list.weaponsList[i + 1] > -1){
 											self->weapons_list.currentWeapon = i + 1;
+											self->energy = self->weapons_list.weaponsList[i + 1];
+											slog("currentWeapon %i", i + 1);
 											return;
 										}
-										if(i==3){
+										if (i == 3){
 											self->weapons_list.currentWeapon = 0;
+											self->energy = 0;
 											return;
 										}
 									}
 								}
+				}break;
+				case SDLK_p:{
+								return_game_controller()->pause = true;
 				}break;
 				}break;
 			case SDL_KEYUP:
@@ -555,6 +697,9 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 				case SDLK_a:{
 								self->action = none;
 								self->is_held = false;
+								if (self->heldFrame > 3){
+									self->color = vector4d(255, 255, 255, 255);
+								}
 								if (self->heldFrame > 60){
 									//fire different type of attack
 									//slog("big pew");
@@ -562,6 +707,7 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 										self->attack_trigger = true;
 										self->attacknum = 1;
 										self->heldFrame = 0;
+										self->color = vector4d(255, 255, 255, 255);
 										self->update_sprite(self);
 									}
 								}
@@ -623,57 +769,43 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 		if (keys[SDL_SCANCODE_A]){
 			self->is_held = true;
 		}
-		if (self->state!=ES_Hit)
+		if (self->state != ES_Hit)
 			self->think(self);
 	}
 }
 
 void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
+	if (type > 1){
+		if (self->energy <= 1)
+			return;
+	}
 	Entity *projectile = gf2d_entity_new();
 	Projectiles proj;
 	projectile->attackdmg = dmg;
 	proj.parentType = ES_Player;
-	init_projectile_ent(projectile,-1);
-	
+	init_projectile_ent(projectile, -1);
+
 	int dir = (self->dir == Right) ? 1 : -1;
 	if (self->is_wall_sliding)
-		dir*=-1;
+		dir *= -1;
 	switch (type){
 	case 0:{
-			   proj.direction = vector2d(dir*speed*1, 0);
+			   proj.direction = vector2d(dir*speed * 1, 0);
 			   proj.destroyOnCollision = true;
 			   proj.aliveFrame = -1;
-			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/lemon.png", 8, 5, 1);	
-			   slog("set");
-			   projectile->position.x = (dir==1)?self->position.x + self->hitbox.offsetx + self->hitbox.w:self->position.x + self->hitbox.offsetx-3;
+			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/lemon.png", 8, 5, 1);
+			   slog("lemons");
+			   projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w : self->position.x + self->hitbox.offsetx - 3;
 			   projectile->position.y = self->position.y + self->hitbox.offsety + 7;
 			   set_hitbox(projectile, projectile->position.x, projectile->position.y, 8, 5, 0, 0);
 			   projectile->proj_data = proj;
+			   play_soundeffect("../sounds/lemon.wav", 0);
 	}break;
-	case 1:{ slog("bigger pew");
+	case 1:{ slog("bigger lemon");
 		proj.direction = vector2d(dir*speed * 1, 0);
 		proj.destroyOnCollision = true;
 		proj.aliveFrame = -1;
 		projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/big_blast.png", 31, 30, 5);
-		if (!(self->is_wall_sliding))
-			projectile->flip = self->flip;
-		else{
-			projectile->flip.y = 0;
-			if (dir==1)
-				projectile->flip.x = 0;
-			else
-				projectile->flip.x = 1;
-		}
-		projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w-7 : self->position.x + self->hitbox.offsetx - 3;
-		projectile->position.y = self->position.y + self->hitbox.offsety-3 ;
-		set_hitbox(projectile, projectile->position.x, projectile->position.y, 31, 30, 0, 0);
-		projectile->proj_data = proj;
-	}break;
-	case 2:{ slog("fire pew");
-		proj.direction = vector2d(dir*speed * 1, 0);
-		proj.destroyOnCollision = true;
-		proj.aliveFrame = -1;
-		projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/fire_weapon.png", 24, 24, 2);
 		if (!(self->is_wall_sliding))
 			projectile->flip = self->flip;
 		else{
@@ -685,12 +817,159 @@ void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
 		}
 		projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w - 7 : self->position.x + self->hitbox.offsetx - 3;
 		projectile->position.y = self->position.y + self->hitbox.offsety - 3;
-		set_hitbox(projectile, projectile->position.x, projectile->position.y, 24, 24, 0, 0);
+		set_hitbox(projectile, projectile->position.x, projectile->position.y, 31, 30, 0, 0);
 		projectile->proj_data = proj;
+	}break;
+	case 2:{
+			   slog("fire pew");
+			   proj.direction = vector2d(dir*speed * 1, 0);
+			   proj.destroyOnCollision = true;
+			   proj.aliveFrame = -1;
+			   gungirl_update_list(self, -5);
+			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/fire_weapon.png", 24, 24, 2);
+			   if (!(self->is_wall_sliding))
+				   projectile->flip = self->flip;
+			   else{
+				   projectile->flip.y = 0;
+				   if (dir == 1)
+					   projectile->flip.x = 0;
+				   else
+					   projectile->flip.x = 1;
+			   }
+			   projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w - 7 : self->position.x + self->hitbox.offsetx - 3;
+			   projectile->position.y = self->position.y + self->hitbox.offsety - 3;
+			   set_hitbox(projectile, projectile->position.x, projectile->position.y, 24, 24, 0, 0);
+			   projectile->proj_data = proj;
+	}break;
+	case 3:{
+			   slog("metal pew");
+			   proj.direction = vector2d(dir*speed * 1, 0);
+			   proj.destroyOnCollision = true;
+			   proj.aliveFrame = -1;
+			   gungirl_update_list(self, -1);
+			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/metalblade_weapon.png", 16, 16, 2);
+			   if (!(self->is_wall_sliding))
+				   projectile->flip = self->flip;
+			   else{
+				   projectile->flip.y = 0;
+				   if (dir == 1)
+					   projectile->flip.x = 0;
+				   else
+					   projectile->flip.x = 1;
+			   }
+			   projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w - 7 : self->position.x + self->hitbox.offsetx - 3;
+			   projectile->position.y = self->position.y + self->hitbox.offsety - 3;
+			   set_hitbox(projectile, projectile->position.x, projectile->position.y, 24, 24, 0, 0);
+			   projectile->proj_data = proj;
 	}break;
 	}
 }
 
 void gungirl_get_ability(Entity* self, int index){
-	self->weapons_list.weaponsList[index] = 35;
+asd	self->weapons_list.weaponsList[index] = 28;
+	slog("got %i", index);
+}
+void gungirl_update_list(Entity* self, int amount){
+	self->energy += amount;
+	if (self->energy < 0)
+		self->energy = 0;
+	self->weapons_list.weaponsList[self->weapons_list.currentWeapon] += amount;
+	if (self->weapons_list.weaponsList[self->weapons_list.currentWeapon] <= 0)
+		self->weapons_list.weaponsList[self->weapons_list.currentWeapon] = 1;
+	if (self->weapons_list.weaponsList[self->weapons_list.currentWeapon] >= 28)
+		self->weapons_list.weaponsList[self->weapons_list.currentWeapon] = 28;
+}
+
+void gungirl_victory(Entity *self){
+	self->left_trigger = false;
+	self->right_trigger = false;
+	self->is_dashing = false;
+	self->state = ES_Idle;
+	self->actionFrame = 600;
+}
+
+void gungirl_death(Entity* self){
+	if (self->state != ES_Dead){
+		self->state = ES_Dead;
+		self->update_sprite(self);
+		stop_bgm();
+		self->actionFrame = 360;
+		play_soundeffect("../sounds/dead.wav", 0);
+	}
+}
+
+void gungirl_reset(Entity* self){
+	clear_key();
+	self->state = ES_Idle;
+	self->update_sprite(self);
+	dx_a = 0;
+	dy_a = 0;
+	self->frame = 0;
+	self->heldFrame = 0;
+	self->color = vector4d(255, 255, 255, 255);
+	self->movementspeed = 1;
+	self->dashspeed = 1.5;
+	self->maxjump = 1;	
+	self->is_grounded = false;
+	self->can_attack = true;
+	self->attack_trigger = false;
+	self->is_held = false;
+	self->l_wall_collision = false;
+	self->r_wall_collision = false;
+	self->right_trigger = false;
+	self->left_trigger = false;
+	self->jumped = false;
+	self->wall_jumped = false;
+	self->falling = false;
+	self->transition = false;
+	self->upper_wall_collision = false;
+	self->is_dashing = false;
+	self->dashFrame = 0;
+	self->in_air = 0;
+	self->invincibleFrame = 0;
+	self->action = none;
+	self->attacknum = 0;
+	self->clip = 1;
+	self->actionFrame = 0;
+	self->action = none;
+}
+
+
+void gungirl_respawn(Entity* self){
+	clear_key();
+	self->health = 27;
+	self->healthmax = 27;
+	self->state = ES_Idle;
+	self->update_sprite(self);
+	dx_a = 0;
+	dy_a = 0;
+	self->frame = 0;
+	self->heldFrame = 0;
+	self->color = vector4d(255, 255, 255, 255);
+	self->movementspeed = 1;
+	self->dashspeed = 1.5;
+	self->maxjump = 1;
+	self->is_grounded = false;
+	self->can_attack = true;
+	self->attack_trigger = false;
+	self->is_held = false;
+	self->l_wall_collision = false;
+	self->r_wall_collision = false;
+	self->right_trigger = false;
+	self->left_trigger = false;
+	self->jumped = false;
+	self->wall_jumped = false;
+	self->falling = false;
+	self->transition = false;
+	self->upper_wall_collision = false;
+	self->is_dashing = false;
+	self->dashFrame = 0;
+	self->in_air = 0;
+	self->invincibleFrame = 0;
+	self->action = none;
+	self->attacknum = 0;
+	self->attackdmg = 3;
+	self->clip = 1;
+	self->actionFrame = 0;
+	self->action = none;
 }

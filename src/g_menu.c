@@ -28,7 +28,7 @@ main_menu* init_menu_ent(){
 select_screen* init_select_screen(){
 	select_screen* select = (select_screen*)malloc(sizeof(select_screen));
 	select->icon_items = (Entity**)gfc_allocate_array(sizeof(Entity*), 4);
-
+	select->selected = false;
 	Entity *background = gf2d_entity_new();
 	init_item(background, 9);
 
@@ -57,6 +57,31 @@ select_screen* init_select_screen(){
 	select->select = 0;
 	slog("position %f %f", fireman->position.x, fireman->position.y);
 	return select;
+}
+
+pause_menu* init_pause_screen(){
+	pause_menu* menu = (pause_menu*)malloc(sizeof(pause_menu));
+	menu->menu_items = (Entity*)malloc(sizeof(Entity)* 2);
+
+	Entity *background = gf2d_entity_new();
+	init_item(background, 11);
+
+	Entity *cursor = gf2d_entity_new();
+	init_item(cursor, 10);
+
+	Entity *start = gf2d_entity_new();
+	init_item(start, 12);
+
+	Entity *save = gf2d_entity_new();
+	init_item(save, 13);
+
+	menu->menu_items[0] = start;
+	menu->menu_items[1] = save;
+	menu->cursor = cursor;
+	menu->select = 0;
+	menu->active = 0;
+
+	return menu;
 }
 
 void init_item(Entity* self, int item){
@@ -94,29 +119,57 @@ void init_item(Entity* self, int item){
 				  self->position = self->start_position;
 	}break;
 	case(5) : {
-				  self->sprite = gf2d_sprite_load_all("../images/test/menu/firemanstage.png", 45, 45, 1);
+				  self->sprite = gf2d_sprite_load_all("../images/test/menu/firemanstage.png", 45, 45, 2);
 				  self->start_position = vector2d(53, 46);
 				  self->position = self->start_position;
+				  self->type = ES_Icon;
 	}break;
 	case(6) : {
-				  self->sprite = gf2d_sprite_load_all("../images/test/menu/teststage.png", 45, 45, 1);
+				  self->sprite = gf2d_sprite_load_all("../images/test/menu/teststage.png", 45, 45, 2);
 				  self->start_position = vector2d(157, 46);
 				  self->position = self->start_position;
+				  self->type = ES_Icon;
 	}break;
 	case(7) : {
-				  self->sprite = gf2d_sprite_load_all("../images/test/menu/metalmanstage.png", 45, 45, 1);
+				  self->sprite = gf2d_sprite_load_all("../images/test/menu/metalmanstage.png", 45, 45, 2);
 				  self->start_position = vector2d(53, 140);
 				  self->position = self->start_position;
+				  self->type = ES_Icon;
 	}break;
 	case(8) : {
-				  self->sprite = gf2d_sprite_load_all("../images/test/menu/bubblemanstage.png", 45, 45, 1);
+				  self->sprite = gf2d_sprite_load_all("../images/test/menu/bubblemanstage.png", 45, 45, 2);
 				  self->start_position = vector2d(157, 140);
 				  self->position = self->start_position;
+				  self->type = ES_Icon;
 	}break;
 	case(9) : {
 				  self->sprite = gf2d_sprite_load_all("../images/test/menu/selectscreen.png", 256, 240, 1);
 				  self->start_position = vector2d(0, 0);
 				  self->position = self->start_position;
+	}break;
+	case(10) : {
+				   self->sprite = gf2d_sprite_load_all("../images/test/menu/cursor.png", 11, 11, 1);
+				   self->start_position = vector2d(30, 89);
+				   self->position = self->start_position;
+				   self->type = ES_Cursor;
+	}break;
+	case(11) : {
+				  self->sprite = gf2d_sprite_load_all("../images/test/menu/pausescreen.png", 252, 136, 1);
+				  self->start_position = vector2d(1, 52);
+				  self->position = self->start_position;
+				  self->type = ES_Pause_Items;
+	}break;
+	case(12) : {
+				   self->sprite = gf2d_sprite_load_all("../images/test/menu/pause_continue.png", 90, 14, 1);
+				   self->start_position = vector2d(42, 89);
+				   self->position = self->start_position;
+				   self->type = ES_Pause_Items;
+	}break;
+	case(13) : {
+				   self->sprite = gf2d_sprite_load_all("../images/test/menu/pause_quit.png", 44, 18, 1);
+				   self->start_position = vector2d(42, 128);
+				   self->position = self->start_position;
+				   self->type = ES_Pause_Items;
 	}break;
 	default:{
 				;
@@ -151,6 +204,51 @@ void get_menu_inputs(main_menu* menu, const Uint8* keys){
 							else{
 								//load save file
 								load_save();
+							}
+			}
+			}break;
+		}
+	}
+	//
+}
+
+void get_pause_inputs(pause_menu* menu, const Uint8* keys){
+	if (menu->active == 0){
+		menu->active = 1;
+		menu_set_position(menu->cursor, vector2d(menu->menu_items[menu->select]->position.x-15, menu->menu_items[menu->select]->position.y));
+		slog("set");
+	}
+	while (SDL_PollEvent(&event))
+	{
+		switch (event.type)
+		{
+		case SDL_KEYDOWN:
+			switch (event.key.keysym.sym){
+			case SDLK_UP: {
+							  menu->select--;
+							  if (menu->select < 0)
+								  menu->select = 0;
+							  menu_set_position(menu->cursor, vector2d(menu->cursor->position.x, menu->menu_items[menu->select]->position.y));
+			}
+				break;
+			case SDLK_DOWN:{
+							   menu->select++;
+							   if (menu->select>1)
+								   menu->select = 1;
+							   menu_set_position(menu->cursor, vector2d(menu->cursor->position.x, menu->menu_items[menu->select]->position.y));
+
+			}break;
+			case SDLK_a:{
+							if (menu->select == 0){
+								return_game_controller()->pause = false;
+								set_update_type(0);
+								menu->active = 0;
+							}								
+							else{
+								//load save file
+								return_game_controller()->pause = false;
+								set_update_type(0);
+								set_game_state(G_BossSelect, 0);
 							}
 			}
 			}break;
@@ -194,7 +292,12 @@ void get_select_inputs(select_screen* select, const Uint8* keys){
 
 			}break;
 			case SDLK_a:{
-								set_game_state(G_Level,select->select);
+							if (!select->selected){
+								select->selected = true;
+								set_game_state(G_Level, select->select);
+
+							}
+								
 			}
 			}break;
 		}
@@ -204,12 +307,26 @@ void get_select_inputs(select_screen* select, const Uint8* keys){
 }
 
 void update_menu_ent(Entity *self){
-	self->frame += .1;
-	if (self->frame > self->sprite->frames_per_line)
-		self->frame = 0;
+	if (self->state == ES_Dead){
+		self->frame = 1;
+		return;
+	}
+	if (self->type != ES_Icon){
+		self->frame += .1;
+		if (self->frame > self->sprite->frames_per_line)
+			self->frame = 0;
+	}
+	if (self->type == ES_Pause_Items){
+		self->position.x = get_game_camera()->position.x + self->start_position.x;
+		self->position.y = get_game_camera()->position.y + self->start_position.y;
+	}
 }
 
 void menu_set_position(Entity *self, Vector2D position){
 	self->position = position;
 	slog("called %f %f",position.x,position.y);
+}
+
+void update_select_ents(Entity *self,EntityState state){
+	self->state = state;
 }

@@ -174,6 +174,8 @@ void init_shooterenemy_ent(Entity *self, int ctr){
 	self->onDeath = shooterenemy_death;
 	self->health = 10;
 	self->healthmax = 10;
+	self->attackdmg = 5;
+	self->reset = shooterenemy_reset;
 }
 void shooterenemy_set_position(Entity *self, Vector2D position){
 	self->position = position;
@@ -216,4 +218,29 @@ void create_shooterenemy_projectile(Entity *self, float speed, float dmg, int ty
 			   projectile->proj_data = proj;
 	}break;
 	}
+}
+void shooterenemy_reset(Entity *self){
+	self->state = ES_Idle;
+	self->frame = 0;
+	self->color = vector4d(255, 255, 255, 255);
+	self->movementspeed = 1;
+	self->dashspeed = 3;
+	self->maxjump = 1;
+	self->is_grounded = false;
+	self->can_attack = true;
+	self->attack_trigger = false;
+	self->in_action = false;
+	self->in_attack = false;
+	self->did_intro = false;
+	self->health_created = false;
+	self->type = ES_Enemy;
+	self->attacknum = 0;
+	self->dir = Right;
+	self->action = none;
+	self->actionFrame = 0;
+	self->health = 10;
+	self->healthmax = 10;
+	self->attackdmg = 5;
+	self->invincibleFrame = 0;
+	self->damageFrame = 0;
 }

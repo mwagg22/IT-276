@@ -1,6 +1,6 @@
 #include <SDL.h>
 #include <stdlib.h>
-
+#include <SDL_mixer.h>
 #include "gf2d_graphics.h"
 #include "simple_logger.h"
 
@@ -51,6 +51,11 @@ void gf2d_graphics_initialize(
         slog("Unable to initilaize SDL system: %s",SDL_GetError());
         return;
     }
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 4, 2048) < 0)
+	{
+		slog("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+
+	}
     atexit(SDL_Quit);
     if (fullscreen)
     {

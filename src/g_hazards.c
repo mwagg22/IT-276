@@ -1,11 +1,12 @@
 #include "g_hazards.h"
-
+#include "g_game.h"
 
 
 void update_hazard_ent(Entity *self);
 void init_hazard_ent(Entity *self, int type){
 	self->type = ES_Hazard;
 	self->frame = 0;
+	self->active = true;
 	self->l_wall_collision = false;
 	self->r_wall_collision = false;
 	self->color = vector4d(255, 255, 255, 255);
@@ -16,6 +17,8 @@ void init_hazard_ent(Entity *self, int type){
 				  self->sprite = gf2d_sprite_load_all("../images/test/hazards/slider.png", 16, 16, 2);
 				  self->dir = 1;
 				  self->can_attack = true;
+				  self->respawn = false;
+				  self->attackdmg = 4;
 	}break;
 	case(1) : {
 				  self->update_ent = update_flamethrower_hazard;
@@ -24,6 +27,8 @@ void init_hazard_ent(Entity *self, int type){
 				  self->position = vector2d(100, 720);
 				  self->start_position = self->position;
 				  self->can_attack = false;
+				  self->respawn = false;
+				  self->attackdmg = 7;
 	}break;
 	case(2) : {
 				  self->update_ent = update_fallingrocks_hazard; 
@@ -31,7 +36,9 @@ void init_hazard_ent(Entity *self, int type){
 				  self->position = vector2d(823, 500);
 				  self->start_position = self->position;
 				  self->can_attack = true;
+				  self->respawn = true;
 				  self->sprite = gf2d_sprite_load_all("../images/test/hazards/rock.png", 32, 32, 1);
+				  self->attackdmg = 5;
 	}break;
 	}
 	
@@ -53,6 +60,8 @@ void update_flamethrower_hazard(Entity* self){
 		self->frame += .1;
 		if (self->frame > 3){
 			self->can_attack = true;
+			if (self->frame > 3.0 &&self->frame <3.2)
+				play_soundeffect("../sounds/fire.wav", 0);
 		}
 		if (self->frame > self->sprite->frames_per_line - 1){
 			self->frame = 0;
@@ -77,6 +86,11 @@ void update_slider_hazard(Entity* self){
 		self->movementspeed = 1.5;
 	else
 		self->movementspeed = 1;
+	if (check_empty_tile(self, return_game_controller()->currentLevel->tiles))
+		if (self->dir == Right)
+			self->dir = 1;
+		else
+			self->dir = -1;
 	if (self->l_wall_collision){
 		self->r_wall_collision = false;
 		self->dir = 1;
@@ -89,4 +103,5 @@ void update_slider_hazard(Entity* self){
 	if (self->frame > self->sprite->frames_per_line - 1){
 		self->frame = 0;
 	}
+	
 }

@@ -256,7 +256,7 @@ void gf2d_sprite_draw(
             sprite->texture,
             colorShift->w);
     }
-    
+
     fpl = (sprite->frames_per_line)?sprite->frames_per_line:1;
     gfc_rect_set(
         cell,

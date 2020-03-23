@@ -191,6 +191,8 @@ void init_rollerenemy_ent(Entity *self, int ctr){
 	self->onDeath = rollerenemy_death;
 	self->health = 10;
 	self->healthmax = 10;
+	self->attackdmg = 5;
+	self->reset = rollerenemy_reset;
 }
 void rollerenemy_set_position(Entity *self, Vector2D position){
 	self->position = position;
@@ -212,4 +214,30 @@ void rollerenemy_death(Entity* self){
 		create_item(I_Health, 6, 300, vector2d(self->position.x + self->hitbox.w / 2, self->position.y));
 	else if (rdm>5 && rdm<9)
 		create_item(I_Bolt, 6, 300, vector2d(self->position.x + self->hitbox.w / 2, self->position.y));
+}
+
+void rollerenemy_reset(Entity *self){
+	self->state = ES_Idle;
+	self->frame = 0;
+	self->color = vector4d(255, 255, 255, 255);
+	self->movementspeed = 1;
+	self->dashspeed = 3;
+	self->maxjump = 1;
+	self->is_grounded = false;
+	self->can_attack = true;
+	self->attack_trigger = false;
+	self->in_action = false;
+	self->in_attack = false;
+	self->did_intro = false;
+	self->health_created = false;
+	self->type = ES_Enemy;
+	self->attacknum = 0;
+	self->dir = Right;
+	self->action = none;
+	self->actionFrame = 0;
+	self->health = 10;
+	self->healthmax = 10;
+	self->attackdmg = 5;
+	self->invincibleFrame = 0;
+	self->damageFrame = 0;
 }

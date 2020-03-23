@@ -1,9 +1,12 @@
-#include "g_fireman.h"
+#include "g_metalman.h"
 #include "simple_logger.h"
 #include "g_projectile.h"
 #include "g_game.h"
 #include <math.h>
-void fireman_think(Entity *self){
+
+bool jump_across = false;
+int dir_m = 0;
+void metalman_think(Entity *self){
 	if (self->state != ES_Dead){
 		float attack_range = 300.0;
 		Entity *target = get_player_entity();
@@ -11,18 +14,23 @@ void fireman_think(Entity *self){
 		if (target){
 			if (vector2d_magnitude_between(target->position, self->position) > attack_range){
 				self->action = none;
-				//slog("not in range");
 			}
 			else{
 				//slog("in range");
-				if ((vector2d_magnitude_between(target->position, self->position) < attack_range/4))
-					self->attacknum = 1;
-				int rdm = (rand() % 11);
-				if (rdm < 3)
-					self->action = attack;
-				else
-					self->action = none;
-			}
+				if ((vector2d_magnitude_between(target->position, self->position) < attack_range / 4)){
+					if (!self->in_action&&self->is_grounded)
+						jump_across = true;
+				}
+					
+				if (self->can_attack==true){
+						slog("attacking");
+						self->action = attack;
+					}
+					else{
+						self->action = jump;
+						slog("jumping");
+					}
+				}
 
 		}
 		if (self->in_action == false){
@@ -33,11 +41,29 @@ void fireman_think(Entity *self){
 				if (self->can_attack == true){
 					flip(self, target->position);
 					self->attack(self);
-					if (self->attacknum == 1)
-						self->actionFrame = (vector2d_magnitude_between(target->position, self->position)) / self->movementspeed;
+					self->actionFrame = 45;
 				}
 				break;
 			case movement:
+				break;
+			case jump:{
+						  if (self->jumped == false && (self->is_grounded == true)){
+							  int rdm = (rand() % 3);
+							  if (rdm < 1)
+								  self->jumpFrame = 120;
+							  else if (rdm < 2)
+								  self->jumpFrame = 100;
+							  else
+								  self->jumpFrame = 60;
+							  if (jump_across == true)
+								  self->jumpFrame = 70;
+						  }
+							 
+						  metalman_jump(self);
+						  //self->actionFrame = 120;
+						  
+
+			}
 				break;
 			case none:{
 						  flip(self, target->position);
@@ -53,25 +79,15 @@ void fireman_think(Entity *self){
 		}
 	}
 }
-void fireman_attack(Entity *self){
+void metalman_attack(Entity *self){
 	switch (self->attacknum){
 	case(0) :
-		if (self->is_grounded == true){
-			//slog("fireman attack 1");
+		{
+			//slog("metalman attack 1");
 			self->can_attack = false;
 			self->in_action = true;
 			self->in_attack = true;
-			create_fireman_projectile(self, 3, self->attackdmg, 0);
-			self->state = ES_Attacking;
-			self->update_sprite(self);
-		}
-		break;
-	case(1) :
-		if (self->is_grounded == true){
-			//slog("fireman attack 2");
-			self->can_attack = false;
-			self->in_action = true;
-			self->in_attack = true;
+			create_metalman_projectile(self, 3, self->attackdmg, 0);
 			self->state = ES_Attacking;
 			self->update_sprite(self);
 		}
@@ -81,7 +97,25 @@ void fireman_attack(Entity *self){
 		break;
 	}
 }
-void update_fireman_sprite(Entity *self){
+
+void metalman_jump(Entity *self){
+	if (self->jumpFrame > 0){
+		self->jumped = true;
+		self->is_grounded = false;
+		self->can_attack = false;
+		metalman_displacement(self,vector2d(0,-3));
+		self->jumpFrame--;		
+		self->state = ES_Jump;
+		self->update_sprite(self);
+		//self->in_action = true;
+	}
+	else{
+		//jump_across = false;
+		self->jumped = false;
+		self->can_attack = true;
+	}
+}
+void update_metalman_sprite(Entity *self){
 	switch (self->state){
 		
 	case(ES_Idle) : {
@@ -92,15 +126,13 @@ void update_fireman_sprite(Entity *self){
 	case(ES_Jump) : {
 						//slog("jump shooter time");
 						self->frame = 0;
-						self->sprite = self->sprite_list.idle;
+						self->sprite = self->sprite_list.jump;
 	}break;
 	case(ES_Attacking) : {
-							 //slog("fireman attack time");
+							 //slog("metalman attack time");
 							 self->frame = 0;
-							 if (self->attacknum==0)
-								self->sprite = self->sprite_list.attack1;
-							 else  if (self->attacknum == 1){
-								 self->sprite = self->sprite_list.attack2;
+							 if (self->attacknum == 0){
+								 self->sprite = self->sprite_list.attack1;
 								 play_soundeffect("../sounds/fire.wav", 0);
 							 }
 	}break;
@@ -111,13 +143,12 @@ void update_fireman_sprite(Entity *self){
 
 
 }
-void update_fireman_ent(Entity *self){
+void update_metalman_ent(Entity *self){
 	self->frame += 0.1;
 	//slog("State:%i", self->state);
 	if (self->did_intro==false){
 		//slog("Intro state");
 		if (!self->health_created){
-			gungirl_reset(get_player_entity());
 			self->health = 1;			
 			create_bar_ent(ES_Bossbar);
 			self->health_created = true;
@@ -129,6 +160,12 @@ void update_fireman_ent(Entity *self){
 			play_soundeffect("../sounds/healthup.wav", 0);
 		}
 		
+	}
+	if (self->clip != 0){
+		if (self->position.y < get_game_camera()->topLeftBounds.y)
+			self->position.y = get_game_camera()->topLeftBounds.y;
+		if (self->position.x<get_game_camera()->topLeftBounds.x)
+			self->position.x = get_game_camera()->topLeftBounds.x;
 	}
 	if (self->health >= self->healthmax){
 		self->health = self->healthmax;
@@ -172,6 +209,16 @@ void update_fireman_ent(Entity *self){
 	if (self->invincibleFrame > 0){
 		self->invincibleFrame--;
 	}
+	if (jump_across==true){
+		if (self->is_grounded==true)
+			dir_m = (self->position.x > get_game_camera()->position.x + 150) ? -1 : 1;
+		if (self->is_grounded == false)
+			metalman_displacement(self, vector2d(dir_m, 0));
+		else{
+			slog("grownded");
+		}
+	}
+
 	switch (self->dir){
 	case(Right) :
 	{
@@ -185,21 +232,13 @@ void update_fireman_ent(Entity *self){
 	if (!self->is_grounded){
 		self->position.y += 1.5;  //might change to gravity
 	}
-	if (self->in_attack){
-		if (self->attacknum == 0){
-			//set_hitbox(self, self->position.x, self->position.y, 29, 25, 0, 0);
-		}
-		if (self->attacknum == 1&&self->frame>4){
-			if ((!self->l_wall_collision&&self->dir != Right) || (!self->r_wall_collision&&self->dir != Left)){
-				if (self->frame > 4.0 &&self->frame <4.2)
-					play_soundeffect("../sounds/fire.wav", 0);
-				if (self->dir == Right)
-					self->position.x += 1;
-				else
-					self->position.x -= 1;
-			}
-		}
+	if (self->is_grounded){
+		self->jumped = false;
+		self->can_attack = false;
+		jump_across = false;
+		self->jumpFrame = 0;
 	}
+
 	if (self->actionFrame > 0){
 		self->actionFrame--;
 	}
@@ -207,16 +246,11 @@ void update_fireman_ent(Entity *self){
 	if (self->frame >= self->sprite->frames_per_line - 1){
 		if (self->actionFrame <= 0){
 			if (self->in_attack){
-				self->can_attack = true;
+				//self->can_attack = true;
 				self->in_action = false;
 				self->in_attack = false;
 				self->state = ES_Idle;
-				if (self->attacknum == 0){
-					self->attacknum = 1;
-				}
-				else{
-					self->attacknum = 0;
-				}
+				self->attacknum = 0;
 			}
 			else if (self->state == ES_Dead){
 				//slog("dead");
@@ -229,16 +263,17 @@ void update_fireman_ent(Entity *self){
 				self->frame = self->sprite->frames_per_line - 1;				
 				self->state = ES_Idle;
 				self->did_intro = true;
+				flip(self, get_player_entity()->position);
 				set_input_control(1);
 			}
-			else{
-				self->frame = 0;
-				self->in_action = false;
-			}
+			//else{
+				//self->frame = 0;
+				//self->in_action = false;
+			//}
 		}
 		else{
 			 if (self->in_attack){
-				self->frame = 7;
+				 self->frame = self->sprite->frames_per_line - 1;
 			}
 			 else{
 				self->frame = self->sprite->frames_per_line - 1;
@@ -247,134 +282,113 @@ void update_fireman_ent(Entity *self){
 	}
 
 }
-void init_fireman_ent(Entity *self, int ctr){
+void init_metalman_ent(Entity *self, int ctr){
 	self->state = ES_Idle;
 	self->controlling = ctr;
 	self->frame = 0;
 	self->position = vector2d(100, 600);
 	self->start_position = self->position;
 	self->color = vector4d(255, 255, 255, 255);
-	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/fireman/fireman_idle.png", 29, 25, 1);
+	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_idle.png", 26, 36, 1);
+	self->sprite_list.intro = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_intro.png", 26, 36, 2);
 	self->sprite_list.dying = gf2d_sprite_load_all("../images/test/effect/boom.png", 56, 56, 15);
-	self->sprite_list.dying->sprite_offsety = 18;
-	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/fireman/fireman_attack1.png", 30, 28, 2);
-	self->sprite_list.attack1->sprite_offsetx = 1;
-	self->sprite_list.attack1->sprite_offsety = 2;
-	self->sprite_list.attack2 = gf2d_sprite_load_all("../images/test/enemy/fireman/fireman_attack2.png", 52, 48, 10);
-	self->sprite_list.attack2->sprite_offsetx = 20;
-	self->sprite_list.attack2->sprite_offsety = 15;
-	self->think = fireman_think;
+	//self->sprite_list.dying->sprite_offsety = 18;
+	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_attack1.png", 26, 36, 2);
+	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_jump.png", 26, 36, 1);
+	//self->sprite_list.attack1->sprite_offsetx = 1;
+	//self->sprite_list.attack1->sprite_offsety = 2;
+	self->think = metalman_think;
 	self->movementspeed = 1;
 	self->dashspeed = 3;
 	self->maxjump = 1;
-	self->update_sprite = update_fireman_sprite;
-	self->is_grounded = false;
+	self->update_sprite = update_metalman_sprite;
+	self->is_grounded = true;
 	self->can_attack = true;
 	self->attack_trigger = false;
 	self->in_action = false;
 	self->in_attack = false;
 	self->did_intro = false;
 	self->health_created = false;
+	self->can_attack = false;
+	self->jumped = false;
 	self->type = ES_Boss;
+	self->jumpFrame = 0;
 	self->attacknum = 0;
 	self->dir = Right;
-	self->attack = fireman_attack;
-	set_hitbox(self, self->position.x, self->position.y, 29, 25, 0, 0);
+	self->attack = metalman_attack;
+	set_hitbox(self, self->position.x, self->position.y, 24, 24, 2, 5);
 	self->action = none;
-	self->update_ent = update_fireman_ent;
-	self->sprite = self->sprite_list.attack1;
-	self->damage = fireman_damage;
+	self->update_ent = update_metalman_ent;
+	self->sprite = self->sprite_list.intro;
+	self->damage = metalman_damage;
 	self->actionFrame = 240;
 	self->health = 27;
 	self->healthmax = 27;
-	self->onDeath = fireman_death;
+	self->onDeath = metalman_death;
 	self->attackdmg = 2;
 	self->invincibleFrame = 0;
-	self->reset = fireman_reset;
+	self->reset = metalman_reset;
+	self->clip = 1;
 }
-void fireman_set_position(Entity *self, Vector2D position){
+void metalman_set_position(Entity *self, Vector2D position){
 	self->position = position;
 }
-void fireman_displacement(Entity *self, Vector2D position){
+void metalman_displacement(Entity *self, Vector2D position){
 	self->position.x += position.x;
 	self->position.y += position.y;
 }
-void fireman_damage(Entity *self, int damage, Vector2D kick){
+void metalman_damage(Entity *self, int damage, Vector2D kick){
 	self->health -= damage;
 	self->damageFrame = 60;
 	self->invincibleFrame = 30;
 }
-void create_fireman_projectile(Entity *self, float speed, float dmg, int type){
+void create_metalman_projectile(Entity *self, float speed, float dmg, int type){
 	Entity *projectile = gf2d_entity_new();
-	Entity *projectile2 = gf2d_entity_new();
-	Entity *projectile3 = gf2d_entity_new();
 	Projectiles proj;
 	projectile->attackdmg = dmg;
-	projectile2->attackdmg = dmg;
-	projectile3->attackdmg = dmg;
 	proj.parentType = ES_Boss;
 	proj.destroyOnCollision = true;
 	proj.aliveFrame = -1;
 	init_projectile_ent(projectile,360);
-	init_projectile_ent(projectile2, 360);
-	init_projectile_ent(projectile3, 360);
 	int dir = (self->dir == Right) ? 1 : -1;
+	Vector2D vec = vector2d(get_player_entity()->position.x - self->position.x, get_player_entity()->position.y - self->position.y);
+	vector2d_normalize(&vec);
+	vec.x *= 2;
+	vec.y *= 2;
 	switch (type){
 	case 0:{
 			
 			   play_soundeffect("../sounds/lemon.wav", 0);
-			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/fire.png", 8, 8, 3);
+			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/metalblade_weapon.png", 16, 16, 3);
 			   //slog("set");
 			   projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w : self->position.x + self->hitbox.offsetx - 3;
 			   projectile->position.y = self->position.y + self->hitbox.offsety + 7;
-			   proj.direction = vector2d(dir*fabs((get_player_entity()->position.x - projectile->position.x) / 180), -2.5);
+			   proj.direction = vec;
 			   set_hitbox(projectile, projectile->position.x, projectile->position.y, 8, 5, 0, 0);			  
-			   projectile->clip = 1;
-			   proj.heightTime = 60;
+			   projectile->clip = 0;
+			   proj.heightTime = -1;
 			   projectile->proj_data = proj;
 			   //slog("x speed?:%f", ((get_player_entity()->position.x - projectile->position.x) / 180));
-			  
-			   projectile2->sprite = gf2d_sprite_load_all("../images/test/projectile/fire.png", 8, 8, 3);
-			   //slog("set");
-			   projectile2->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w : self->position.x + self->hitbox.offsetx - 3;
-			   projectile2->position.y = self->position.y + self->hitbox.offsety + 7;
-			   set_hitbox(projectile2, projectile2->position.x, projectile2->position.y, 8, 5, 0, 0);		
-			   proj.direction = vector2d(dir*fabs((get_player_entity()->position.x - projectile2->position.x) / 180), -1.8);
-			   projectile2->clip = 1;
-			   proj.heightTime = 60;
-			   projectile2->proj_data = proj;
-
-			   
-			   projectile3->sprite = gf2d_sprite_load_all("../images/test/projectile/fire.png", 8, 8, 3);
-			   //slog("set");
-			   projectile3->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w : self->position.x + self->hitbox.offsetx - 3;
-			   projectile3->position.y = self->position.y + self->hitbox.offsety + 7;
-			   proj.direction = vector2d(dir*fabs((get_player_entity()->position.x - projectile3->position.x) / 180), -.8);
-			   set_hitbox(projectile3, projectile3->position.x, projectile3->position.y, 8, 5, 0, 0);		   
-			   projectile3->clip = 1;
-			   proj.heightTime = 60;
-			   projectile3->proj_data = proj;
-			   //slog("height time :%i", proj.heightTime);
 	}break;
 	}
 }
 
-void fireman_death(Entity* self){
+void metalman_death(Entity* self){
 	set_input_control(0);
 	Entity *player = get_player_entity();
-	player->getPowerUp(player, 1);
+	player->getPowerUp(player, 2);
 	player->invincibleFrame = 9999;
 	player->heldFrame = 0;
 	player->damageFrame = 0;
 	clear_key();
 	stop_bgm();
 	play_soundeffect("../sounds/dead.wav", 0);
-	update_game_data("bossdata", 0, 1);
-	update_game_data("weapondata", 1, 1);
+	update_game_data("bossdata", 2, 1);
+	update_game_data("weapondata", 2, 1);
 	save_game();
 }
 
-void fireman_reset(Entity *self){
+void metalman_reset(Entity *self){
 	self->state = ES_Idle;
 	self->sprite = self->sprite_list.attack1;
 	self->frame = 0;
