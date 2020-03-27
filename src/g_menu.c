@@ -41,8 +41,8 @@ select_screen* init_select_screen(){
 	Entity *metalman = gf2d_entity_new();
 	init_item(metalman, 7);
 
-	Entity *bubbleman = gf2d_entity_new();
-	init_item(bubbleman, 8);
+	Entity *crashman = gf2d_entity_new();
+	init_item(crashman, 8);
 
 	Entity *cursor = gf2d_entity_new();
 	init_item(cursor, 4);
@@ -51,7 +51,7 @@ select_screen* init_select_screen(){
 	
 	select->icon_items[1] = test;
 	select->icon_items[2] = metalman;
-	select->icon_items[3] = bubbleman;
+	select->icon_items[3] = crashman;
 
 	select->cursor = cursor;
 	select->select = 0;
@@ -137,7 +137,7 @@ void init_item(Entity* self, int item){
 				  self->type = ES_Icon;
 	}break;
 	case(8) : {
-				  self->sprite = gf2d_sprite_load_all("../images/test/menu/bubblemanstage.png", 45, 45, 2);
+				  self->sprite = gf2d_sprite_load_all("../images/test/menu/crashmanstage.png", 45, 45, 2);
 				  self->start_position = vector2d(157, 140);
 				  self->position = self->start_position;
 				  self->type = ES_Icon;
@@ -199,10 +199,13 @@ void get_menu_inputs(main_menu* menu, const Uint8* keys){
 						
 			}break;
 			case SDLK_a:{
-							if (menu->select==0)
-								set_game_state(G_BossSelect,0);
+							if (menu->select == 0){
+								play_soundeffect("../sounds/warp.wav", 0);
+								set_game_state(G_BossSelect, 0);
+							}
 							else{
 								//load save file
+								play_soundeffect("../sounds/warp.wav", 0);
 								load_save();
 							}
 			}
@@ -225,6 +228,7 @@ void get_pause_inputs(pause_menu* menu, const Uint8* keys){
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym){
 			case SDLK_UP: {
+							  play_soundeffect("../sounds/menuselect.wav", 0);
 							  menu->select--;
 							  if (menu->select < 0)
 								  menu->select = 0;
@@ -232,6 +236,7 @@ void get_pause_inputs(pause_menu* menu, const Uint8* keys){
 			}
 				break;
 			case SDLK_DOWN:{
+							   play_soundeffect("../sounds/menuselect.wav", 0);
 							   menu->select++;
 							   if (menu->select>1)
 								   menu->select = 1;
@@ -265,6 +270,7 @@ void get_select_inputs(select_screen* select, const Uint8* keys){
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym){
 			case SDLK_UP: {
+							  play_soundeffect("../sounds/menuselect.wav", 0);
 							  select->select-=2;
 							  if (select->select < 0)
 								  select->select += 2;
@@ -272,12 +278,14 @@ void get_select_inputs(select_screen* select, const Uint8* keys){
 			}
 				break;
 			case SDLK_DOWN:{
+							   play_soundeffect("../sounds/menuselect.wav", 0);
 							   select->select+=2;
 							   if (select->select>3)
 								   select->select -=2 ;
 							   menu_set_position(select->cursor, vector2d(select->icon_items[select->select]->position.x, select->icon_items[select->select]->position.y));
 			}break;
 			case SDLK_LEFT: {
+							  play_soundeffect("../sounds/menuselect.wav", 0);
 							  select->select -= 1;
 							  if (select->select < 0)
 								  select->select += 1;
@@ -285,6 +293,7 @@ void get_select_inputs(select_screen* select, const Uint8* keys){
 			}
 				break;
 			case SDLK_RIGHT:{
+								play_soundeffect("../sounds/menuselect.wav", 0);
 							   select->select +=1;
 							   if (select->select>3)
 								   select->select -= 1;
@@ -294,11 +303,20 @@ void get_select_inputs(select_screen* select, const Uint8* keys){
 			case SDLK_a:{
 							if (!select->selected){
 								select->selected = true;
+								play_soundeffect("../sounds/warp.wav", 0);
 								set_game_state(G_Level, select->select);
 
 							}
 								
-			}
+			}break;
+			case SDLK_s:{
+							if (!select->selected){
+								select->selected = true;
+								set_game_state(G_Menu, 0);
+
+							}
+
+			}break;
 			}break;
 		}
 	}

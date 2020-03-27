@@ -1,12 +1,12 @@
-#include "g_metalman.h"
+#include "g_crashman.h"
 #include "simple_logger.h"
 #include "g_projectile.h"
 #include "g_game.h"
 #include <math.h>
 
-bool jump_across = false;
-int dir_m = 0;
-void metalman_think(Entity *self){
+bool jump_across_m = false;
+int dir_c = 0;
+void crashman_think(Entity *self){
 	if (self->state != ES_Dead){
 		float attack_range = 300.0;
 		Entity *target = get_player_entity();
@@ -17,19 +17,22 @@ void metalman_think(Entity *self){
 			}
 			else{
 				//slog("in range");
-				if ((vector2d_magnitude_between(target->position, self->position) < attack_range / 4)){
-					if (!self->in_action&&self->is_grounded)
-						jump_across = true;
-				}
-					
-				if (self->can_attack==true){
-						slog("attacking");
-						self->action = attack;
+				if (self->is_grounded){
+					if (target->in_attack == true){
+						jump_across_m = true;
+						if (self->action != jump)
+							self->in_action = false;
+						self->action = jump;
 					}
 					else{
-						self->action = jump;
-						slog("jumping");
+						self->action = none;
 					}
+				}
+					
+				 if (self->can_attack==true){
+						self->action = attack;
+					}
+				
 				}
 
 		}
@@ -48,29 +51,30 @@ void metalman_think(Entity *self){
 				break;
 			case jump:{
 						  if (self->jumped == false && (self->is_grounded == true)){
-							  int rdm = (rand() % 3);
-							  if (rdm < 1)
-								  self->jumpFrame = 100;
-							  else if (rdm < 2)
-								  self->jumpFrame = 60;
-							  else
-								  self->jumpFrame = 30;
-							  if (jump_across == true)
-								  self->jumpFrame = 70;
+							  if (jump_across_m == true)
+								  self->jumpFrame = 50;
+							  if (target->position.x < self->position.x){
+								  dir_c = -1;
+							  }
+							  else if (target->position.x > self->position.x){
+								  dir_c = 1;
+							  }
+							  else{
+								  dir_c = 0;
+							  }
+							  flip(self, target->position);
 						  }
-							 
-						  metalman_jump(self);
+						  
+							crashman_jump(self);
 						  //self->actionFrame = 120;
 						  
 
 			}
 				break;
 			case none:{
-						  flip(self, target->position);
 						  self->in_action = true;
-						  self->state = ES_Idle;
+						  self->state = ES_Running;
 						  self->update_sprite(self);
-						  self->actionFrame = (rand() % 60);
 			}
 				break;
 			default:
@@ -79,15 +83,15 @@ void metalman_think(Entity *self){
 		}
 	}
 }
-void metalman_attack(Entity *self){
+void crashman_attack(Entity *self){
 	switch (self->attacknum){
 	case(0) :
 		{
-			//slog("metalman attack 1");
+			slog("crashman attack 1");
 			self->can_attack = false;
 			self->in_action = true;
 			self->in_attack = true;
-			create_metalman_projectile(self, 3, self->attackdmg, 0);
+			create_crashman_projectile(self, 3, self->attackdmg, 0);
 			self->state = ES_Attacking;
 			self->update_sprite(self);
 		}
@@ -98,24 +102,24 @@ void metalman_attack(Entity *self){
 	}
 }
 
-void metalman_jump(Entity *self){
+void crashman_jump(Entity *self){
 	if (self->jumpFrame > 0){
 		self->jumped = true;
 		self->is_grounded = false;
 		self->can_attack = false;
-		metalman_displacement(self,vector2d(0,-3));
+		crashman_displacement(self,vector2d(0,-3));
 		self->jumpFrame--;		
 		self->state = ES_Jump;
 		self->update_sprite(self);
 		//self->in_action = true;
 	}
-	else{
-		//jump_across = false;
+	else if(self->jumpFrame==0){
+		//jump_across_m = false;
 		self->jumped = false;
 		self->can_attack = true;
 	}
 }
-void update_metalman_sprite(Entity *self){
+void update_crashman_sprite(Entity *self){
 	switch (self->state){
 		
 	case(ES_Idle) : {
@@ -123,13 +127,18 @@ void update_metalman_sprite(Entity *self){
 			self->frame = 0;
 			self->sprite = self->sprite_list.idle;
 	}break;
+	case(ES_Running) : {
+						//slog("idle time");	
+						self->frame = 0;
+						self->sprite = self->sprite_list.run;
+	}break;
 	case(ES_Jump) : {
 						//slog("jump shooter time");
 						self->frame = 0;
 						self->sprite = self->sprite_list.jump;
 	}break;
 	case(ES_Attacking) : {
-							 //slog("metalman attack time");
+							 //slog("crashman attack time");
 							 self->frame = 0;
 							 if (self->attacknum == 0){
 								 self->sprite = self->sprite_list.attack1;
@@ -143,12 +152,13 @@ void update_metalman_sprite(Entity *self){
 
 
 }
-void update_metalman_ent(Entity *self){
+void update_crashman_ent(Entity *self){
 	self->frame += 0.1;
 	//slog("State:%i", self->state);
 	if (self->did_intro==false){
 		//slog("Intro state");
 		if (!self->health_created){
+			flip(self, get_player_entity()->position);
 			self->health = 1;			
 			create_bar_ent(ES_Bossbar);
 			self->health_created = true;
@@ -210,25 +220,47 @@ void update_metalman_ent(Entity *self){
 	if (self->invincibleFrame > 0){
 		self->invincibleFrame--;
 	}
-	if (jump_across==true){
-		if (self->is_grounded==true)
-			dir_m = (self->position.x > get_game_camera()->position.x + 150) ? -1 : 1;
-		if (self->is_grounded == false)
-			metalman_displacement(self, vector2d(dir_m, 0));
-		else{
-			slog("grownded");
-		}
-	}
 
+
+	
 	switch (self->dir){
 	case(Right) :
 	{
 					self->flip = vector2d(0, 0);
+					if (self->is_grounded){
+						dir_c = 1;
+					}
 	}break;
 	case(Left) :
 	{
 				   self->flip = vector2d(1, 0);
+				   if (self->is_grounded){
+					   dir_c = -1;
+				   }
 	}break;
+	}
+	if (self->did_intro){
+		if (self->l_wall_collision){
+			if (!self->is_grounded&&dir_c < 0){
+				dir_c = 0;
+			}
+			else{
+				dir_c = 1;
+				self->dir = Right;
+			}
+		}
+
+		if (self->r_wall_collision){
+			if (!self->is_grounded&&dir_c > 0){
+				dir_c = 0;
+			}
+			else{
+				dir_c = -1;
+				self->dir = Left;
+			}
+		}
+		if (self->state!=ES_Dead)
+			crashman_displacement(self, vector2d(dir_c, 0));
 	}
 	if (!self->is_grounded){
 		self->position.y += 1.5;  //might change to gravity
@@ -236,8 +268,8 @@ void update_metalman_ent(Entity *self){
 	if (self->is_grounded){
 		self->jumped = false;
 		self->can_attack = false;
-		jump_across = false;
-		self->jumpFrame = 0;
+		jump_across_m = false;
+		self->jumpFrame = -1;
 	}
 
 	if (self->actionFrame > 0){
@@ -247,7 +279,7 @@ void update_metalman_ent(Entity *self){
 	if (self->frame >= self->sprite->frames_per_line - 1){
 		if (self->actionFrame <= 0){
 			if (self->in_attack){
-				//self->can_attack = true;
+				self->can_attack = false;
 				self->in_action = false;
 				self->in_attack = false;
 				self->state = ES_Idle;
@@ -264,13 +296,12 @@ void update_metalman_ent(Entity *self){
 				self->frame = self->sprite->frames_per_line - 1;				
 				self->state = ES_Idle;
 				self->did_intro = true;
-				flip(self, get_player_entity()->position);
 				set_input_control(1);
 			}
-			//else{
-				//self->frame = 0;
+			else{
+				self->frame = 0;
 				//self->in_action = false;
-			//}
+			}
 		}
 		else{
 			 if (self->in_attack){
@@ -283,26 +314,27 @@ void update_metalman_ent(Entity *self){
 	}
 
 }
-void init_metalman_ent(Entity *self, int ctr){
+void init_crashman_ent(Entity *self, int ctr){
 	self->state = ES_Idle;
 	self->controlling = ctr;
 	self->frame = 0;
 	self->position = vector2d(100, 600);
 	self->start_position = self->position;
 	self->color = vector4d(255, 255, 255, 255);
-	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_idle.png", 26, 36, 1);
-	self->sprite_list.intro = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_intro.png", 26, 36, 2);
+	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_idle.png", 32, 31, 1);
+	self->sprite_list.intro = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_intro.png", 32, 31, 3);
 	self->sprite_list.dying = gf2d_sprite_load_all("../images/test/effect/boom.png", 56, 56, 15);
 	//self->sprite_list.dying->sprite_offsety = 18;
-	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_attack1.png", 26, 36, 2);
-	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_jump.png", 26, 36, 1);
+	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_attack1.png", 32, 31, 2);
+	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_jump.png", 32, 31, 1);
+	self->sprite_list.run = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_run.png", 32, 31, 4);
 	//self->sprite_list.attack1->sprite_offsetx = 1;
 	//self->sprite_list.attack1->sprite_offsety = 2;
-	self->think = metalman_think;
+	self->think = crashman_think;
 	self->movementspeed = 1;
 	self->dashspeed = 3;
 	self->maxjump = 1;
-	self->update_sprite = update_metalman_sprite;
+	self->update_sprite = update_crashman_sprite;
 	self->is_grounded = true;
 	self->can_attack = true;
 	self->attack_trigger = false;
@@ -316,61 +348,62 @@ void init_metalman_ent(Entity *self, int ctr){
 	self->jumpFrame = 0;
 	self->attacknum = 0;
 	self->dir = Right;
-	self->attack = metalman_attack;
-	set_hitbox(self, self->position.x, self->position.y, 24, 24, 2, 5);
+	self->attack = crashman_attack;
+	set_hitbox(self, self->position.x, self->position.y, 32, 31, 0, 0);
 	self->action = none;
-	self->update_ent = update_metalman_ent;
+	self->update_ent = update_crashman_ent;
 	self->sprite = self->sprite_list.intro;
-	self->damage = metalman_damage;
+	self->damage = crashman_damage;
 	self->actionFrame = 240;
 	self->health = 27;
 	self->healthmax = 27;
-	self->onDeath = metalman_death;
+	self->onDeath = crashman_death;
 	self->attackdmg = 2;
 	self->invincibleFrame = 0;
-	self->reset = metalman_reset;
+	self->reset = crashman_reset;
 	self->clip = 1;
 }
-void metalman_set_position(Entity *self, Vector2D position){
+void crashman_set_position(Entity *self, Vector2D position){
 	self->position = position;
 }
-void metalman_displacement(Entity *self, Vector2D position){
+void crashman_displacement(Entity *self, Vector2D position){
 	self->position.x += position.x;
 	self->position.y += position.y;
 }
-void metalman_damage(Entity *self, int damage, Vector2D kick){
+void crashman_damage(Entity *self, int damage, Vector2D kick){
 	self->health -= damage;
 	self->damageFrame = 60;
 	self->invincibleFrame = 30;
 }
-void create_metalman_projectile(Entity *self, float speed, float dmg, int type){
+void create_crashman_projectile(Entity *self, float speed, float dmg, int type){
 	Entity *projectile = gf2d_entity_new();
 	Projectiles proj;
 	projectile->attackdmg = dmg;
 	proj.parentType = ES_Boss;
 	proj.destroyOnCollision = true;
-	proj.destroyOnSurface = false;
+	proj.destroyOnSurface = true;
 	proj.aliveFrame = -1;
 	proj.gravity = 0;
-	proj.stick = 0;
-	proj.destroyeffect = -1;
+	proj.destroyeffect = 1;
+	proj.stick = true;
 	init_projectile_ent(projectile,360);
 	int dir = (self->dir == Right) ? 1 : -1;
 	Vector2D vec = vector2d(get_player_entity()->position.x - self->position.x, get_player_entity()->position.y - self->position.y);
 	vector2d_normalize(&vec);
-	vec.x *= 2;
-	vec.y *= 2;
+	vec.x *= 1.5;
+	vec.y *= 1.5;
 	switch (type){
 	case 0:{
 			
-			   play_soundeffect("../sounds/metalblade.wav", 0);
-			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/metalblade_weapon.png", 16, 16, 3);
+			   play_soundeffect("../sounds/lemon.wav", 0);
+			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/crashbomb.png", 13, 13, 3);
 			   //slog("set");
 			   projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w : self->position.x + self->hitbox.offsetx - 3;
 			   projectile->position.y = self->position.y + self->hitbox.offsety + 7;
+			   projectile->flip = self->flip;
 			   proj.direction = vec;
-			   set_hitbox(projectile, projectile->position.x, projectile->position.y, 8, 5, 0, 0);			  
-			   projectile->clip = 0;
+			   set_hitbox(projectile, projectile->position.x, projectile->position.y, 13, 10, 0, 0);			  
+			   projectile->clip = 1;
 			   proj.heightTime = -1;
 			   projectile->proj_data = proj;
 			   //slog("x speed?:%f", ((get_player_entity()->position.x - projectile->position.x) / 180));
@@ -378,22 +411,22 @@ void create_metalman_projectile(Entity *self, float speed, float dmg, int type){
 	}
 }
 
-void metalman_death(Entity* self){
+void crashman_death(Entity* self){
 	set_input_control(0);
 	Entity *player = get_player_entity();
-	player->getPowerUp(player, 2);
+	player->getPowerUp(player, 3);
 	player->invincibleFrame = 9999;
 	player->heldFrame = 0;
 	player->damageFrame = 0;
 	clear_key();
 	stop_bgm();
 	play_soundeffect("../sounds/dead.wav", 0);
-	update_game_data("bossdata", 2, 1);
-	update_game_data("weapondata", 2, 1);
+	update_game_data("bossdata", 3, 1);
+	update_game_data("weapondata", 3, 1);
 	save_game();
 }
 
-void metalman_reset(Entity *self){
+void crashman_reset(Entity *self){
 	self->state = ES_Idle;
 	self->sprite = self->sprite_list.attack1;
 	self->frame = 0;

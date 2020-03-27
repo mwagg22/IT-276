@@ -33,8 +33,10 @@ void fireman_think(Entity *self){
 				if (self->can_attack == true){
 					flip(self, target->position);
 					self->attack(self);
-					if (self->attacknum == 1)
+					if (self->attacknum == 1){
 						self->actionFrame = (vector2d_magnitude_between(target->position, self->position)) / self->movementspeed;
+						self->invincibleFrame = self->actionFrame;
+					}
 				}
 				break;
 			case movement:
@@ -142,6 +144,7 @@ void update_fireman_ent(Entity *self){
 			self->update_sprite(self);
 			self->onDeath(self);
 			self->in_attack = false;
+			gungirl_reset(get_player_entity());
 			set_input_control(0);
 			self->color = vector4d(255, 255, 255, 255);
 			
@@ -314,7 +317,11 @@ void create_fireman_projectile(Entity *self, float speed, float dmg, int type){
 	projectile3->attackdmg = dmg;
 	proj.parentType = ES_Boss;
 	proj.destroyOnCollision = true;
+	proj.destroyOnSurface = false;
+	proj.destroyeffect = -1;
 	proj.aliveFrame = -1;
+	proj.gravity = true;
+	proj.stick = 0;
 	init_projectile_ent(projectile,360);
 	init_projectile_ent(projectile2, 360);
 	init_projectile_ent(projectile3, 360);

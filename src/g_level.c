@@ -120,6 +120,9 @@ void load_level_entities(SJson* list){
 		else if (!strcmp(sj_get_string_value(objectContent), "metalman")){
 			init_metalman_ent(entity, 0);
 		}
+		else if (!strcmp(sj_get_string_value(objectContent), "crashman")){
+			init_crashman_ent(entity, 0);
+		}
 		else if (!strcmp(sj_get_string_value(objectContent), "transition")){
 			int x1,y1,x2,y2;
 			char* type;

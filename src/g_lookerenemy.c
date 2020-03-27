@@ -201,7 +201,11 @@ void lookerenemy_damage(Entity *self, int damage, Vector2D kick){
 	self->damageFrame = 60;
 }
 void lookerenemy_death(Entity* self){
-	create_effect(vector2d(self->position.x + self->hitbox.w / 2 - 5, self->position.y), 0, -1);
+	Effects data;
+	data.centered = true;
+	data.offset = vector2d(0, 0);
+	data.type = 0;
+	create_effect(vector2d(self->position.x + self->hitbox.w / 2 - 5, self->position.y), 0, -1,data);
 	int rdm = (rand() % 11);
 	if (rdm < 2)
 		create_item(I_Energy, 6, 300, vector2d(self->position.x + self->hitbox.w / 2, self->position.y));

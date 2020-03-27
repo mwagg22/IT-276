@@ -792,7 +792,11 @@ void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
 	case 0:{
 			   proj.direction = vector2d(dir*speed * 1, 0);
 			   proj.destroyOnCollision = true;
+			   proj.destroyeffect = -1;
 			   proj.aliveFrame = -1;
+			   proj.gravity = false;
+			   proj.destroyOnSurface = false;
+			   proj.stick = 0;
 			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/lemon.png", 8, 5, 1);
 			   slog("lemons");
 			   projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w : self->position.x + self->hitbox.offsetx - 3;
@@ -805,6 +809,10 @@ void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
 		proj.direction = vector2d(dir*speed * 1, 0);
 		proj.destroyOnCollision = true;
 		proj.aliveFrame = -1;
+		proj.destroyeffect = -1;
+		proj.gravity = false;
+		proj.destroyOnSurface = false;
+		proj.stick = 0;
 		projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/big_blast.png", 31, 30, 5);
 		if (!(self->is_wall_sliding))
 			projectile->flip = self->flip;
@@ -825,6 +833,10 @@ void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
 			   proj.direction = vector2d(dir*speed * 1, 0);
 			   proj.destroyOnCollision = true;
 			   proj.aliveFrame = -1;
+			   proj.gravity = false;
+			   proj.destroyOnSurface = false;
+			   proj.stick = 0;
+			   proj.destroyeffect = -1;
 			   gungirl_update_list(self, -5);
 			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/fire_weapon.png", 24, 24, 2);
 			   if (!(self->is_wall_sliding))
@@ -843,9 +855,14 @@ void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
 	}break;
 	case 3:{
 			   slog("metal pew");
+			   play_soundeffect("../sounds/metalblade.wav", 0);
 			   proj.direction = vector2d(dir*speed * 1, 0);
 			   proj.destroyOnCollision = true;
 			   proj.aliveFrame = -1;
+			   proj.gravity = false;
+			   proj.destroyOnSurface = false;
+			   proj.stick = 0;
+			   proj.destroyeffect = -1;
 			   gungirl_update_list(self, -1);
 			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/metalblade_weapon.png", 16, 16, 2);
 			   if (!(self->is_wall_sliding))
@@ -858,15 +875,40 @@ void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
 					   projectile->flip.x = 1;
 			   }
 			   projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w - 7 : self->position.x + self->hitbox.offsetx - 3;
-			   projectile->position.y = self->position.y + self->hitbox.offsety - 3;
+			   projectile->position.y = self->position.y + self->hitbox.offsety + 3;
 			   set_hitbox(projectile, projectile->position.x, projectile->position.y, 24, 24, 0, 0);
+			   projectile->proj_data = proj;
+	}break;
+	case 4:{
+			   slog("crash pew");
+			   proj.direction = vector2d(dir*1, 0);
+			   proj.destroyOnCollision = true;
+			   proj.destroyOnSurface = false;
+			   projectile->actionFrame = 300;
+			   proj.gravity = 0;
+			   proj.destroyeffect = 1;
+			   proj.stick = true;
+			   gungirl_update_list(self, -4);
+			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/crashbomb_weapon.png", 13, 15, 3);
+			   if (!(self->is_wall_sliding))
+				   projectile->flip = self->flip;
+			   else{
+				   projectile->flip.y = 0;
+				   if (dir == 1)
+					   projectile->flip.x = 0;
+				   else
+					   projectile->flip.x = 1;
+			   }
+			   projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w - 7 : self->position.x + self->hitbox.offsetx - 3;
+			   projectile->position.y = self->position.y + self->hitbox.offsety + 7;
+			   set_hitbox(projectile, projectile->position.x, projectile->position.y, 13, 15, 0, 0);
 			   projectile->proj_data = proj;
 	}break;
 	}
 }
 
 void gungirl_get_ability(Entity* self, int index){
-asd	self->weapons_list.weaponsList[index] = 28;
+	self->weapons_list.weaponsList[index] = 28;
 	slog("got %i", index);
 }
 void gungirl_update_list(Entity* self, int amount){

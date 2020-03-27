@@ -122,6 +122,8 @@ void handle_hit_collision(Entity *self, Entity *other, Vector2D kick){
 void handle_projectile_collision(Entity *self, Entity *other,Vector2D kick){
 	if (self->type == ES_Projectile){
 		if (self->proj_data.destroyOnCollision){
+			if (self->proj_data.destroyeffect > -1)
+				self->onDeath(self);
 			set_to_zero_ent(self->Ent_ID);
 		}
 	}
