@@ -17,7 +17,7 @@ typedef enum
 	ES_Dash = 8,
 	ES_Intro = 9,
 	ES_WarpIn = 10,
-	ES_WarpOut=11
+	ES_WarpOut = 11
 }EntityState;
 #endif
 
@@ -25,7 +25,7 @@ typedef enum
 #define Movement_Type
 typedef enum{
 	M_None = 0,
-	M_Switch=1
+	M_Switch = 1
 }MovementType;
 #endif
 #ifndef Entity_Type
@@ -141,11 +141,26 @@ typedef struct Projectiles_s
 	//struct Entity_S *Hitarray;
 	EntityType parentType;
 	int effect;
+	int destroyeffect;
 	bool destroyOnCollision;
+	bool destroyOnSurface;
+	bool gravity;
+	bool stick;
 	int aliveFrame;
 	int heightTime;//how long to stay in air
 	Vector2D direction;
 }Projectiles;
+#endif
+
+#ifndef effect_h
+#define effect_h
+typedef struct Effects_s
+{
+	//struct Entity_S *Hitarray;
+	bool centered;
+	Vector2D offset;
+	int type;
+}Effects;
 #endif
 
 #ifndef weapons_h
@@ -182,6 +197,7 @@ typedef struct Entity_S
 	EntityType		type;			//check entity type
 	Item_type		itemType;       //for items
 	Projectiles		proj_data;		//for projectiles
+	Effects			effect_data;    //for effets;
 	Weapons			weapons_list;   //for player
 	MovementType	movement_type;
 	struct health_s*		health_bar;
@@ -194,10 +210,10 @@ typedef struct Entity_S
 	void(*victory)(struct Entity_S* self);
 	void(*special)(struct Entity_S* self, int n);
 	void(*getPowerUp)(struct Entity_S* self, int n);
-	void(*transition_function)(struct Entity_S* self,Dir dir);
+	void(*transition_function)(struct Entity_S* self, Dir dir);
 	void(*onDeath)(struct Entity_S* self);
 	void(*get_inputs)(struct Entity *self, const Uint8 * keys, float delta);
-	void(*damage)(struct Entity_S *self, int damage,Vector2D kick);
+	void(*damage)(struct Entity_S *self, int damage, Vector2D kick);
 	void(*reset)(struct Entity_S* self);
 	int           health;
 	int           healthmax;
@@ -225,9 +241,13 @@ typedef struct Entity_S
 	bool			in_attack;//in attaciking state
 	bool			l_wall_collision;//for wall jump, check left and right colliision
 	bool			r_wall_collision;
+	bool			ladder_collision;
 	bool upper_wall_collision;
 	bool right_trigger;
 	bool left_trigger;
+	bool up_trigger;
+	bool down_trigger;
+	bool on_ladder;
 	bool is_wall_sliding;
 	bool jumped;
 	bool wall_jumped;
@@ -279,7 +299,7 @@ void gf2d_clear_entity_manager();
 void update_entity(Entity *self);
 
 void gf2d_entity_free(Entity *self);
-void set_hitbox(Entity *self, int x,int y,int w,int h,int offsetx,int offsety);
+void set_hitbox(Entity *self, int x, int y, int w, int h, int offsetx, int offsety);
 void update_hitbox_position(Entity *self);
 void set_position(Entity *self, Vector2D position);
 void displacement(Entity *self, Vector2D disp);
@@ -299,7 +319,7 @@ void entity_in_bounds(Entity* self, struct Camera_S *cam);
 void entity_tile_collision(int** tiles);
 void init_ready_ent(Entity* self);
 void update_ready_ent(Entity *self);
-void init_bossdoor_ent(Entity* self,int type);
+void init_bossdoor_ent(Entity* self, int type);
 void update_bossdoor_ent(Entity *self);
 void reset_bossdoor(Entity* self);
 Entity *get_bar_entity(EntityType type);
