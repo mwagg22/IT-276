@@ -86,11 +86,12 @@ void update_slider_hazard(Entity* self){
 		self->movementspeed = 1.5;
 	else
 		self->movementspeed = 1;
-	if (check_empty_tile(self, return_game_controller()->currentLevel->tiles))
-		if (self->dir == Right)
-			self->dir = 1;
-		else
+	if (check_empty_tile(self, return_game_controller()->currentLevel->tiles)){
+		if (self->dir == 1)
 			self->dir = -1;
+		else if (self->dir==-1)
+			self->dir = 1;
+	}
 	if (self->l_wall_collision){
 		self->r_wall_collision = false;
 		self->dir = 1;

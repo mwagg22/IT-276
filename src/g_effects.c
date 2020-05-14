@@ -26,7 +26,7 @@ void init_effect_ent(Entity *self, int type,int aliveFrame){
 					   self->sprite = gf2d_sprite_load_all("../images/test/effect/boom.png", 56, 56, 15);
 	}break;
 	case 2:{
-					 ////self->sprite = gf2d_sprite_load_all("../images/test/effect/energy.png", 16, 16, 2);;
+					self->sprite = gf2d_sprite_load_all("../images/test/effect/explosion.png", 24, 24, 5);
 	}break;
 	}
 	self->color = vector4d(255, 255, 255, 255);

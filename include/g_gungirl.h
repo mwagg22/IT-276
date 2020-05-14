@@ -14,7 +14,7 @@ void init_gungirl_ent(Entity *self, int ctr);
 void gungirl_set_position(Entity *self, Vector2D position);
 void gungirl_displacement(Entity *self, Vector2D position);
 void gungirl_get_inputs(Entity *self, const Uint8 * keys);
-void create_gungirl_projectile(Entity *self, float speed, float dmg, int type);
+void create_gungirl_projectile(Entity *self, float speed, float dmg, int type, float xpos, float ypos, int angleop, int effectcol, int stick);
 void gungirl_get_ability(Entity* self, int index);
 int* init_weapons_list();
 void gungirl_update_list(Entity* self,int amount);

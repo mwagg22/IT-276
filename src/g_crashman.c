@@ -87,7 +87,7 @@ void crashman_attack(Entity *self){
 	switch (self->attacknum){
 	case(0) :
 		{
-			slog("crashman attack 1");
+			//slog("crashman attack 1");
 			self->can_attack = false;
 			self->in_action = true;
 			self->in_attack = true;
@@ -321,15 +321,13 @@ void init_crashman_ent(Entity *self, int ctr){
 	self->position = vector2d(100, 600);
 	self->start_position = self->position;
 	self->color = vector4d(255, 255, 255, 255);
-	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_idle.png", 32, 31, 1);
-	self->sprite_list.intro = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_intro.png", 32, 31, 3);
+	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_idle.png", 32, 32, 1);
+	self->sprite_list.intro = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_intro.png", 32, 32, 3);
 	self->sprite_list.dying = gf2d_sprite_load_all("../images/test/effect/boom.png", 56, 56, 15);
 	//self->sprite_list.dying->sprite_offsety = 18;
-	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_attack1.png", 32, 31, 2);
-	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_jump.png", 32, 31, 1);
-	self->sprite_list.run = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_run.png", 32, 31, 4);
-	//self->sprite_list.attack1->sprite_offsetx = 1;
-	//self->sprite_list.attack1->sprite_offsety = 2;
+	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_attack1.png", 32, 32, 2);
+	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_jump.png", 32, 32, 1);
+	self->sprite_list.run = gf2d_sprite_load_all("../images/test/enemy/crashman/crashman_run.png", 32, 32, 3);
 	self->think = crashman_think;
 	self->movementspeed = 1;
 	self->dashspeed = 3;
@@ -349,7 +347,7 @@ void init_crashman_ent(Entity *self, int ctr){
 	self->attacknum = 0;
 	self->dir = Right;
 	self->attack = crashman_attack;
-	set_hitbox(self, self->position.x, self->position.y, 32, 31, 0, 0);
+	set_hitbox(self, self->position.x, self->position.y, 32, 32, 0, 0);
 	self->action = none;
 	self->update_ent = update_crashman_ent;
 	self->sprite = self->sprite_list.intro;

@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include <stdlib.h>
 #include <SDL_mixer.h>
+#include <SDL_TTF.h>
 #include "gf2d_graphics.h"
 #include "simple_logger.h"
 
@@ -55,6 +56,10 @@ void gf2d_graphics_initialize(
 	{
 		slog("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
 
+	}
+	if (TTF_Init() == -1)
+	{
+		slog("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
 	}
     atexit(SDL_Quit);
     if (fullscreen)

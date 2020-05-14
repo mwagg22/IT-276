@@ -97,6 +97,8 @@ Entity *gf2d_return_list(){
 void draw_entities(Camera* cam){
 	for (int i = 0; i < gf2d_entity_manager.entity_max; i++){
 		if (gf2d_entity_manager.entity_list[i]._inuse){
+			if (gf2d_entity_manager.entity_list[i].show == false)
+				continue;
 			if (gf2d_entity_manager.entity_list[i].type == ES_Healthbar || gf2d_entity_manager.entity_list[i].type == ES_Energybar)
 				continue;
 			if (return_game_controller()->pause == false){
@@ -124,6 +126,7 @@ void draw_entities(Camera* cam){
 void update_all_entities(int type){
 	//0 for all level entities
 	//1 for just player
+	//2 for just pause
 	for (int i = 0; i < gf2d_entity_manager.entity_max; i++){
 		if (gf2d_entity_manager.entity_list[i]._inuse){
 			if (gf2d_entity_manager.entity_list[i].type == ES_Healthbar || gf2d_entity_manager.entity_list[i].type == ES_Energybar)
@@ -169,6 +172,7 @@ Entity *get_player_entity(){
 			return &gf2d_entity_manager.entity_list[i];
 			}
 	}
+	return NULL;
 }
 Entity *get_boss_entity(){
 	for (int i = 0; i < gf2d_entity_manager.entity_max; i++){
@@ -176,6 +180,7 @@ Entity *get_boss_entity(){
 			return &gf2d_entity_manager.entity_list[i];
 		}
 	}
+	return NULL;
 }
 void entity_in_bounds(Entity* self, Camera *cam){
 	if (self->type == ES_Player){
@@ -360,6 +365,17 @@ void draw_ui(Camera* cam){
 		}
 	}
 }
+
+void draw_text(){
+	for (int i = 0; i < gf2d_entity_manager.entity_max; i++){
+		if (gf2d_entity_manager.entity_list[i]._inuse){
+			if (gf2d_entity_manager.entity_list[i].type == ES_TextBox){
+				update_entity(&gf2d_entity_manager.entity_list[i]);
+				gf2d_font_draw_line(gf2d_entity_manager.entity_list[i].text_data.string, gf2d_entity_manager.entity_list[i].text_data.font, gf2d_entity_manager.entity_list[i].text_data.size, gf2d_entity_manager.entity_list[i].text_data.color, gf2d_entity_manager.entity_list[i].position);
+			}
+		}
+	}
+}
 void update_ent(Entity *self){
 	self->frame += .1;
 	if (self->frame > self->sprite->frames_per_line)
@@ -381,5 +397,20 @@ void init_transition_ent(Entity* self, Vector2D topleft,Vector2D bottomright, Di
 	self->position = self->start_position;
 	self->topbounds = topleft;
 	self->bottombounds = bottomright;
+}
+
+void init_color_ent(Entity* self){
+	self->frame = 0;
+	self->color = return_game_controller()->data->coloredit;
+	self->flip = vector2d(0, 0);
+	self->state = ES_Idle;
+	self->update_ent = update_color_ent;
+	self->sprite = gf2d_sprite_load_all("../images/test/idle.png", 40, 40, 1);
+	set_hitbox(self, self->position.x, self->position.y, 0, 0, 0, 0);
+	self->start_position = vector2d(110, 92);
+	self->position = self->start_position;
+}
+void update_color_ent(Entity* self){
+	self->color = return_game_controller()->data->coloredit;
 }
 /*eol@eof*/

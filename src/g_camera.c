@@ -137,4 +137,5 @@ bool in_new_position_bounds(Camera *cam){
 		return(cam->topLeftBounds.y >= cam->position.y&&
 			cam->bottomRightBounds.y >= cam->position.y + cam->viewHeight);
 	}
+	return false;
 }

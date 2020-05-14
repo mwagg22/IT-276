@@ -166,7 +166,7 @@ void init_rollerenemy_ent(Entity *self, int ctr){
 	self->color = vector4d(255, 255, 255, 200);
 	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/roller/roller_idle.png", 32, 32, 1);
 	self->sprite_list.dying = gf2d_sprite_load_all("../images/test/enemy/shooter/shooter_dying.png", 32, 32, 1);
-	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/roller/roller_attack.png", 32, 32, 3);
+	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/roller/roller_attack.png", 32, 32, 6);
 	self->think = rollerenemy_think;
 	self->movementspeed = 1;
 	self->dashspeed = 3;
@@ -204,9 +204,13 @@ void rollerenemy_displacement(Entity *self, Vector2D position){
 void rollerenemy_damage(Entity *self, int damage,Vector2D kick){
 	self->health -= damage;
 	self->damageFrame = 60;
+	play_soundeffect("../sounds/enemydamage.wav", 0);
 }
 void rollerenemy_death(Entity* self){
 	Effects data;
+	self->health = 0;
+	self->state = ES_Dead;
+	self->color = vector4d(255, 255, 255, 0);
 	data.centered = true;
 	data.offset = vector2d(0, 0);
 	data.type = 0;

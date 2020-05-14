@@ -54,7 +54,9 @@ typedef enum
 	ES_Boss = 19,
 	ES_Pause_Items = 20,
 	ES_Cursor = 21,
-	ES_BossDoor = 22
+	ES_BossDoor = 22,
+	ES_BulletEdit_Item=23,
+	ES_TextBox=24
 }EntityType;
 #endif
 
@@ -173,6 +175,18 @@ typedef struct Weapons_S
 }Weapons;
 #endif
 
+#ifndef text_h
+#define text_h
+typedef struct text_info{
+	int aliveFrame;
+	int size;
+	char* string;
+	char* font;
+	bool follow;
+	Vector4D color;
+}text_info;
+#endif
+
 #ifndef Entity_h
 #define Entity_h
 typedef struct Entity_S
@@ -199,6 +213,7 @@ typedef struct Entity_S
 	Projectiles		proj_data;		//for projectiles
 	Effects			effect_data;    //for effets;
 	Weapons			weapons_list;   //for player
+	text_info		text_data; //text
 	MovementType	movement_type;
 	struct health_s*		health_bar;
 	void(*think)(struct Entity_S* self);   /**<function called on entity think*/
@@ -227,6 +242,7 @@ typedef struct Entity_S
 	int			  specialnum;
 	int           attacknum;
 	int			  maxjump;
+	int			  maxdash;
 	int           cast;//for magic casting
 	bool          show;
 	bool			can_attack;
@@ -241,6 +257,7 @@ typedef struct Entity_S
 	bool			in_attack;//in attaciking state
 	bool			l_wall_collision;//for wall jump, check left and right colliision
 	bool			r_wall_collision;
+	bool			bossdoor_collision;
 	bool			ladder_collision;
 	bool upper_wall_collision;
 	bool right_trigger;
@@ -310,6 +327,7 @@ void update_ent(Entity *self);
 Entity *get_nearest_target(Entity *self, Entity *other);
 void draw_entities(struct Camera_S* cam);
 void draw_ui(struct Camera_S* cam);
+void draw_text();
 void update_all_entities(int type);
 Entity *get_player_entity();
 Entity *get_boss_entity();
@@ -319,6 +337,8 @@ void entity_in_bounds(Entity* self, struct Camera_S *cam);
 void entity_tile_collision(int** tiles);
 void init_ready_ent(Entity* self);
 void update_ready_ent(Entity *self);
+void init_color_ent(Entity* self);
+void update_color_ent(Entity* self);
 void init_bossdoor_ent(Entity* self, int type);
 void update_bossdoor_ent(Entity *self);
 void reset_bossdoor(Entity* self);

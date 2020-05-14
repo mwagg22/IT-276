@@ -21,12 +21,15 @@ typedef enum {
 	G_Menu = 1,
 	G_BossSelect = 2,
 	G_Level = 3,
-	G_Paused = 4
+	G_Paused = 4,
+	G_ColorEdit=5
 }game_state;
 
 typedef struct game_data_S{
 	int* bossdata;
 	int* weapondata;
+	int* bulletdata;
+	Vector4D coloredit;
 }game_data;
 
 typedef struct game_states_S{
@@ -35,6 +38,8 @@ typedef struct game_states_S{
 	main_menu *menu;
 	select_screen *selectScreen;
 	pause_menu *pauseMenu;
+	bullet_menu* bulletMenu;
+	color_menu* colorMenu;
 	Level *currentLevel;
 	Entity *controllerEntity;
 	Camera *cam;
@@ -47,6 +52,7 @@ typedef struct game_states_S{
 	bool have_save;
 	bool can_input;
 	bool pause;
+	bool bullet_edit;
 	bool boss_state;
 	int updateType;
 	Vector2D cameraTopBound;

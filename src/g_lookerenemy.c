@@ -199,9 +199,13 @@ void lookerenemy_displacement(Entity *self, Vector2D position){
 void lookerenemy_damage(Entity *self, int damage, Vector2D kick){
 	self->health -= damage;
 	self->damageFrame = 60;
+	play_soundeffect("../sounds/enemydamage.wav", 0);
 }
 void lookerenemy_death(Entity* self){
 	Effects data;
+	self->health = 0;
+	self->state = ES_Dead;
+	self->color = vector4d(255, 255, 255, 0);
 	data.centered = true;
 	data.offset = vector2d(0, 0);
 	data.type = 0;

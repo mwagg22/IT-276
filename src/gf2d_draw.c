@@ -1,6 +1,7 @@
 #include "gf2d_draw.h"
 #include "gf2d_graphics.h"
 #include "simple_logger.h"
+#include <SDL_TTF.h>
 
 void gf2d_draw_lines(Vector2D *p1,Vector2D *p2, Uint32 lines,Vector4D color)
 {
@@ -177,6 +178,60 @@ void gf2d_draw_circle(Vector2D center, int radius, Vector4D color)
                             255);
     free(pointArray);
 }
+void gf2d_font_draw_line(char *text, char *fontname,int size, Vector4D color, Vector2D position)
+{
+	SDL_Surface *surface;
+	SDL_Texture *texture;
+	SDL_Color col = { 255, 255,255};
+	SDL_Rect dst = { 0 };
+	TTF_Font *font = TTF_OpenFont(fontname, size);
+	//slog("%s,%s", text, fontname);
+	if (!text)
+	{
+		slog("cannot draw text, none provided");
+		return;
+	}
+	if (!font)
+	{
+		slog("cannot draw text, no font provided");
+		return;
+	}
 
+	surface = TTF_RenderText_Solid(font, text, col);
+	if (!surface)
+	{
+		slog("failed to render text");
+		return;
+	}
+	surface = gf2d_graphics_screen_convert(&surface);
+	if (!surface)
+	{
+		slog("failed to convert text surface to screen format");
+		return;
+	}
+
+	texture = SDL_CreateTextureFromSurface(gf2d_graphics_get_renderer(), surface);
+	if (!texture)
+	{
+		slog("failed to convert text surface to texture");
+		SDL_FreeSurface(surface);
+		return;
+	}
+	SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+	SDL_UpdateTexture(texture,
+		NULL,
+		surface->pixels,
+		surface->pitch);
+	vector2d_copy(dst, position);
+	dst.w = surface->w;
+	dst.h = surface->h;
+	SDL_RenderCopy(
+		gf2d_graphics_get_renderer(),
+		texture,
+		NULL,
+		&dst);
+	SDL_FreeSurface(surface);
+	SDL_DestroyTexture(texture);
+}
 
 /*eol@eof*/

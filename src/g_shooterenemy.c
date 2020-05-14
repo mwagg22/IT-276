@@ -57,7 +57,8 @@ void shooterenemy_attack(Entity *self){
 			self->can_attack = false;
 			self->in_action = true;
 			self->in_attack = true;
-			create_shooterenemy_projectile(self, 3, self->attackdmg, 0);
+			create_shooterenemy_projectile(self, 1, self->attackdmg, 0);
+			play_soundeffect("../sounds/lemon.wav", 0);
 			self->state = ES_Attacking;
 			self->update_sprite(self);
 		}
@@ -187,9 +188,13 @@ void shooterenemy_displacement(Entity *self, Vector2D position){
 void shooterenemy_damage(Entity *self, int damage, Vector2D kick){
 	self->health -= damage;
 	self->damageFrame = 60;
+	play_soundeffect("../sounds/enemydamage.wav", 0);
 }
 void shooterenemy_death(Entity* self){
 	Effects data;
+	self->health = 0;
+	self->state = ES_Dead;
+	self->color = vector4d(255, 255, 255, 0);
 	data.centered = false;
 	data.offset = vector2d(0, 0);
 	data.type = 0;

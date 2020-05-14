@@ -23,12 +23,12 @@ void metalman_think(Entity *self){
 				}
 					
 				if (self->can_attack==true){
-						slog("attacking");
+						//slog("attacking");
 						self->action = attack;
 					}
 					else{
 						self->action = jump;
-						slog("jumping");
+						//slog("jumping");
 					}
 				}
 
@@ -290,12 +290,12 @@ void init_metalman_ent(Entity *self, int ctr){
 	self->position = vector2d(100, 600);
 	self->start_position = self->position;
 	self->color = vector4d(255, 255, 255, 255);
-	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_idle.png", 26, 36, 1);
-	self->sprite_list.intro = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_intro.png", 26, 36, 2);
+	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_idle.png", 32, 32, 1);
+	self->sprite_list.intro = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_intro.png", 32, 32, 3);
 	self->sprite_list.dying = gf2d_sprite_load_all("../images/test/effect/boom.png", 56, 56, 15);
 	//self->sprite_list.dying->sprite_offsety = 18;
-	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_attack1.png", 26, 36, 2);
-	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_jump.png", 26, 36, 1);
+	self->sprite_list.attack1 = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_attack1.png", 32, 32, 3);
+	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/enemy/metalman/metalman_jump.png", 32, 32, 1);
 	//self->sprite_list.attack1->sprite_offsetx = 1;
 	//self->sprite_list.attack1->sprite_offsety = 2;
 	self->think = metalman_think;

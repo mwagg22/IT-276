@@ -68,6 +68,7 @@ Level* load_level(const char* filename){
 }
 void load_level_entities(SJson* list){
 	SJson *value, *object,*objectContent;
+	value = sj_null_new();
 	int ctr = 0;
 	for (int j = 0; j < sj_array_get_count(list); j++){
 		object = sj_array_get_nth(list, ctr);

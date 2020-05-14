@@ -26,8 +26,11 @@ void init_game(){
 	game->data = (game_data*)malloc(sizeof(game_data));
 	game->data->bossdata = (int*)gfc_allocate_array(sizeof(int), 4);
 	game->data->weapondata = (int*)gfc_allocate_array(sizeof(int), 4);
+	game->data->bulletdata = (int*)gfc_allocate_array(sizeof(int), 5);
+	game->data->coloredit = vector4d(255, 255, 255, 255);
 	memset(game->data->bossdata, 0, sizeof(int)* 4);
 	memset(game->data->weapondata, 0, sizeof(int)* 4);
+	memset(game->data->bulletdata, 0, sizeof(int)* 5);
 	game->cam=init_camera(NULL, 256, 240, vector2d(0, 0), vector2d(256, 240));
 	set_game_state(G_Menu, 0);
 	game->controllerEntity = game->menu->cursor;
@@ -36,6 +39,7 @@ void init_game(){
 	game->can_input = true;
 	game->updateType = 0;
 	game->pause = false;
+	game->bullet_edit = false;
 	game->boss_state = true;
 }
 void set_update_type(int type){
@@ -67,7 +71,7 @@ void set_game_state(game_state state,int level){
 						case(0) : {
 								//fireman
 									  game->currentLevel = load_level("../levels/firemanstage.json");
-									  play_bgm("../sounds/metalman.wav", 0);
+									  play_bgm("../sounds/fireman.wav", 1);
 						}break;
 						case(1) : {
 								//test
@@ -75,7 +79,8 @@ void set_game_state(game_state state,int level){
 						}break;
 						case(2) : {
 								//metalman
-									  game->currentLevel = load_level("../levels/metalmanboss.json");
+									  game->currentLevel = load_level("../levels/metalmanstage.json");
+									  play_bgm("../sounds/metalman.wav", 1);
 						}break;
 						case(3) : {
 									  //bubbleman
@@ -86,8 +91,15 @@ void set_game_state(game_state state,int level){
 						game->boss_state = true;
 						game->controllerEntity = get_player_entity();
 						game->pauseMenu = init_pause_screen();
+						game->bulletMenu = init_bulletmenu_screen();
 						set_input_control(0);
 						set_target(game->cam, game->controllerEntity, 1);
+	}break;
+	case(G_ColorEdit) : {
+					   game->colorMenu = init_colormenu_screen();
+					   set_game_camera_bounds(vector2d(0, 0), vector2d(256, 240));
+					   play_bgm("../sounds/options.wav", 0);
+
 	}break;
 	}
 	game->CurrentState = state;
@@ -106,20 +118,26 @@ void load_save(){
 	}
 	//get boss data and player weapon data
 	value = sj_object_get_value(file, "bossdata");
-
 	game->data->bossdata = sj_array_return(value);
 	sj_echo(value);
-	value = sj_object_get_value(file, "weapondata");
-	sj_echo(value);
+	
+	value = sj_object_get_value(file, "weapondata");	
 	game->data->weapondata = sj_array_return(value);
+	sj_echo(value);
+
+	value = sj_object_get_value(file, "bulletdata");
+	game->data->bulletdata = sj_array_return(value);
+	sj_echo(value);
+	
 	set_game_state(G_BossSelect, 0);
 }
 
 void save_game(){
-	SJson *file,*array,*array2,*data;
+	SJson *file, *array, *array2, *array3, *data;
 	file = sj_object_new();
 	array=sj_array_new();
 	array2 = sj_array_new();
+	array3 = sj_array_new();
 	
 	for (int i = 0; i < 4; i++){
 		data = sj_new_int(game->data->bossdata[i]);
@@ -130,9 +148,14 @@ void save_game(){
 		data = sj_new_int(game->data->weapondata[i]);
 		sj_array_append(array2, data);
 	}
+	for (int i = 0; i < 5; i++){
+		data = sj_new_int(game->data->bulletdata[i]);
+		sj_array_append(array3, data);
+	}
 
 	sj_object_insert(file, "bossdata", array);
 	sj_object_insert(file, "weapondata", array2);
+	sj_object_insert(file, "bulletdata", array3);
 	sj_save(file, "../gamedata.sav");
 }
 
@@ -145,6 +168,16 @@ void update_game_data(char* key,int index ,int value){
 	}
 	if (!strcmp(key, "weapondata")){
 		game->data->weapondata[index] = value;
+	}
+	if (!strcmp(key, "bulletdata")){
+		game->data->bulletdata[index] = value;
+	}
+	if (!strcmp(key, "colordata")){
+		switch (index){
+		case 0:game->data->coloredit.x = value; break;
+		case 1:game->data->coloredit.y = value; break;
+		case 2:game->data->coloredit.z = value; break;
+		}
 	}
 }
 
@@ -199,11 +232,17 @@ void update_game(const Uint8 *keys){
 									continue;
 								gungirl_get_ability(game->controllerEntity,i);
 							}
+							for (int i = 0; i < 5; i++){
+								game->bulletMenu->menu_items[i]->frame = game->data->bulletdata[i];
+							}
 							game->update = true;
 						}
 						if (game->pause){
 							set_update_type(2);
-							get_pause_inputs(game->pauseMenu, keys);
+							if (game->bullet_edit)
+								get_bulletmenu_inputs(game->bulletMenu, keys);								
+							else
+								get_pause_inputs(game->pauseMenu, keys);
 						}
 						else if (game->can_input)
 							gungirl_get_inputs(game->controllerEntity,keys);
@@ -212,6 +251,10 @@ void update_game(const Uint8 *keys){
 						
 						
 	}break;
+	case(G_ColorEdit) : {
+					   if (game->can_input)
+						   get_color_inputs(game->colorMenu, keys);
+	}break;
 	}
 	if (!game->transition){
 		update_camera(game->cam);
@@ -219,11 +262,13 @@ void update_game(const Uint8 *keys){
 		if (game->CurrentState == G_Level){
 			draw_tiles(game->currentLevel, game->cam);
 			draw_entities(game->cam);
-			draw_ui(game->cam);
+			if (!game->pause)
+				draw_ui(game->cam);
 		}
-		else
+		else{
 			draw_entities(game->cam);
-		
+			draw_text();
+		}
 	}
 }
 void clear_key(){
@@ -318,7 +363,7 @@ int main(int argc, char * argv[])
 		Vector2D pos = vector2d(0, 0);
 				
 		update_game(keys);
-
+		
         gf2d_grahics_next_frame();// render current draw frame and skip to the next frame
 		
         if (keys[SDL_SCANCODE_ESCAPE])done = 1; // exit condition

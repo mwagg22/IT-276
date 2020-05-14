@@ -56,20 +56,25 @@ void gungirl_attack(Entity *self){
 		switch (self->attacknum){
 		case(0) :
 		{
-					create_gungirl_projectile(self, 3, self->attackdmg, self->attacknum);
+					int y = -5;
+					for (int i = 0; i <= return_game_controller()->data->bulletdata[0]; i++){
+						slog("number %i", return_game_controller()->data->bulletdata[0]);
+						create_gungirl_projectile(self, return_game_controller()->data->bulletdata[1] + 1.5, self->attackdmg, self->attacknum, 0, y, return_game_controller()->data->bulletdata[2], return_game_controller()->data->bulletdata[4], return_game_controller()->data->bulletdata[3]);
+						y += 5;
+					}
 		}
 				//fire gun
 				break;
 		case(1) :
 			//fire stronger gun?
 		{
-					create_gungirl_projectile(self, 3, self->attackdmg * 2, self->attacknum);
+					create_gungirl_projectile(self, 3, self->attackdmg * 2, self->attacknum,0,0,0,-1,0);
 		}
 				break;
 		}
 	}
 	else{
-		create_gungirl_projectile(self, 3, self->attackdmg * 2, self->weapons_list.currentWeapon + 1);
+		create_gungirl_projectile(self, 3, self->attackdmg * 2, self->weapons_list.currentWeapon + 1,0,0,0,-1,0);
 	}
 }
 void gungirl_special(Entity *self){
@@ -99,7 +104,7 @@ void gungirl_special(Entity *self){
 void gungirl_dash(Entity *self){
 	self->is_dashing = true;
 	self->state = ES_Dash;
-	if (self->dashFrame < 50){
+	if (self->dashFrame < 50 && self->maxdash>0){
 		if (self->dir == Right){
 			if (!self->r_wall_collision)
 				gungirl_displacement(self, vector2d(self->dashspeed, 0));
@@ -247,8 +252,6 @@ void update_gungirl_sprite(Entity *self){
 							self->frame = 0;
 							self->sprite = self->sprite_list.wallSlide;
 							self->is_wall_sliding = true;
-							//run attack
-							//slog("wall slide");
 						}
 						else{
 							//slog("jumping");
@@ -335,14 +338,14 @@ void update_gungirl_ent(Entity *self){
 		if (self->invincibleFrame % 3 == 1)
 			self->color = vector4d(255, 255, 255, 0);
 		else
-			self->color = vector4d(255, 255, 255, 255);
+			self->color = return_game_controller()->data->coloredit;
 	}
 	if (self->is_held == true){
 		self->heldFrame++;
 	}
 	if (self->upper_wall_collision){
 		self->jumpFrame = 20;
-		slog("upper wall collision");
+		//slog("upper wall collision");
 	}
 	if (self->actionFrame > 0)
 		self->actionFrame--;
@@ -360,13 +363,13 @@ void update_gungirl_ent(Entity *self){
 			if (self->heldFrame % 9 == 1)
 				self->color = vector4d(255, 255, 255, 0);
 			else
-				self->color = vector4d(255, 255, 255, 255);
+				self->color = return_game_controller()->data->coloredit;
 		}
 		else{
 			if (self->heldFrame % 3 == 1)
 				self->color = vector4d(255, 255, 255, 0);
 			else
-				self->color = vector4d(255, 255, 255, 255);
+				self->color = return_game_controller()->data->coloredit;
 		}
 	}
 	update_hitbox_position(self);
@@ -426,7 +429,7 @@ void update_gungirl_ent(Entity *self){
 			self->velocity.y += .5;
 			//slog("wall sliding");
 		}
-		if (self->state != ES_Hit && self->state != ES_WarpIn &&self->state != ES_Dash){
+		if (self->state != ES_Hit && self->state != ES_WarpIn &&self->state != ES_Dash&&self->state!=ES_Dead){
 			if (self->sprite != self->sprite_list.warpOut || self->sprite != self->sprite_list.warpIn || self->sprite != self->sprite_list.jump || self->sprite != self->sprite_list.jumpAttack || self->sprite != self->sprite_list.wallSlide || self->sprite != self->sprite_list.wallAttack){
 				self->state = ES_Jump;
 				//slog("To jump");
@@ -443,6 +446,7 @@ void update_gungirl_ent(Entity *self){
 		self->falling = false;
 		self->in_air = 0;
 		self->maxjump = 1;
+		self->maxdash = 1;
 		self->jumpFrame = 0;
 		if (self->state == ES_Jump){
 			self->state = ES_Idle;
@@ -516,21 +520,22 @@ void init_gungirl_ent(Entity *self, int ctr){
 	self->controlling = ctr;
 	self->frame = 0;
 	self->position = vector2d(100, 500);
-	self->color = vector4d(255, 255, 255, 255);
-	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/idle.png", 32, 32, 1);
-	self->sprite_list.run = gf2d_sprite_load_all("../images/test/run.png", 32, 32, 4);
-	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/jump.png", 32, 32, 2);
-	self->sprite_list.wallSlide = gf2d_sprite_load_all("../images/test/wallSlide.png", 32, 32, 1);
-	self->sprite_list.wallAttack = gf2d_sprite_load_all("../images/test/wallAttack.png", 32, 32, 3);
-	self->sprite_list.dash = gf2d_sprite_load_all("../images/test/dash.png", 32, 32, 1);
+	self->color = return_game_controller()->data->coloredit;
+	self->sprite_list.idle = gf2d_sprite_load_all("../images/test/idle.png", 40, 40, 1);
+	self->sprite_list.run = gf2d_sprite_load_all("../images/test/run.png", 40, 40, 4);
+	self->sprite_list.jump = gf2d_sprite_load_all("../images/test/jump.png", 40, 40, 2);
+	self->sprite_list.wallSlide = gf2d_sprite_load_all("../images/test/wallSlide.png", 40, 40, 1);
+	self->sprite_list.wallAttack = gf2d_sprite_load_all("../images/test/wallAttack.png", 40, 40, 3);
+	self->sprite_list.dash = gf2d_sprite_load_all("../images/test/dash.png", 40, 40, 2);
 	//self->sprite_list->dying;
-	self->sprite_list.idleAttack = gf2d_sprite_load_all("../images/test/idleAttack.png", 32, 32, 3);
-	self->sprite_list.runAttack = gf2d_sprite_load_all("../images/test/runAttack.png", 32, 32, 4);
-	self->sprite_list.jumpAttack = gf2d_sprite_load_all("../images/test/jumpAttack.png", 32, 32, 3);
-	self->sprite_list.dashAttack = gf2d_sprite_load_all("../images/test/dashAttack.png", 32, 32, 3);
-	self->sprite_list.hit = gf2d_sprite_load_all("../images/test/hit.png", 32, 32, 8);
-	self->sprite_list.warpIn = gf2d_sprite_load_all("../images/test/warpIn.png", 32, 32, 3);
-	self->sprite_list.warpOut = gf2d_sprite_load_all("../images/test/warpOut.png", 32, 32, 3);
+
+	self->sprite_list.idleAttack = gf2d_sprite_load_all("../images/test/idleAttack.png", 40, 40, 3);
+	self->sprite_list.runAttack = gf2d_sprite_load_all("../images/test/runAttack.png", 40, 40, 4);
+	self->sprite_list.jumpAttack = gf2d_sprite_load_all("../images/test/jumpAttack.png", 40, 40, 3);
+	self->sprite_list.dashAttack = gf2d_sprite_load_all("../images/test/dashAttack.png", 40, 40, 3);
+	self->sprite_list.hit = gf2d_sprite_load_all("../images/test/hit.png", 40, 40, 8);
+	self->sprite_list.warpIn = gf2d_sprite_load_all("../images/test/warpIn.png", 40, 40, 3);
+	self->sprite_list.warpOut = gf2d_sprite_load_all("../images/test/warpOut.png", 40, 40, 3);
 	self->sprite_list.dying = gf2d_sprite_load_all("../images/test/effect/boom.png", 56, 56, 15);
 	self->sprite_list.dying->sprite_offsety = 18;
 	//self->sprite_list->special1;
@@ -548,6 +553,7 @@ void init_gungirl_ent(Entity *self, int ctr){
 	self->is_held = false;
 	self->l_wall_collision = false;
 	self->r_wall_collision = false;
+	self->bossdoor_collision = false;
 	self->right_trigger = false;
 	self->left_trigger = false;
 	self->jumped = false;
@@ -561,7 +567,7 @@ void init_gungirl_ent(Entity *self, int ctr){
 	self->attacknum = 0;
 	self->attack = gungirl_attack;
 	self->transition_function = gungirl_transition;
-	set_hitbox(self, self->position.x, self->position.y, 24, 24, 4, 3);
+	set_hitbox(self, self->position.x, self->position.y, 14, 24, 14, 10);
 	self->update_ent = update_gungirl_ent;
 	self->sprite = self->sprite_list.idle;
 	self->damage = gungirl_damage;
@@ -698,7 +704,7 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 								self->action = none;
 								self->is_held = false;
 								if (self->heldFrame > 3){
-									self->color = vector4d(255, 255, 255, 255);
+									self->color = return_game_controller()->data->coloredit;
 								}
 								if (self->heldFrame > 60){
 									//fire different type of attack
@@ -707,7 +713,7 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 										self->attack_trigger = true;
 										self->attacknum = 1;
 										self->heldFrame = 0;
-										self->color = vector4d(255, 255, 255, 255);
+										self->color = return_game_controller()->data->coloredit;
 										self->update_sprite(self);
 									}
 								}
@@ -717,6 +723,7 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 				}break;
 				case SDLK_d:{
 								self->dashFrame = 0;
+								self->maxdash--;
 								self->is_dashing = false;
 								self->right_trigger = false;
 								self->action = none;
@@ -774,7 +781,7 @@ void gungirl_get_inputs(Entity *self, const Uint8 * keys){
 	}
 }
 
-void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
+void create_gungirl_projectile(Entity *self, float speed, float dmg, int type, float xpos, float ypos,int angleop,int effectcol,int stick){
 	if (type > 1){
 		if (self->energy <= 1)
 			return;
@@ -790,17 +797,21 @@ void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
 		dir *= -1;
 	switch (type){
 	case 0:{
-			   proj.direction = vector2d(dir*speed * 1, 0);
+			   switch (angleop){
+			   case 0:{   proj.direction = vector2d(dir*speed * 1, 0); }break;
+			   case 1:{proj.direction = vector2d(dir*speed * 1, speed * -1); }break;
+			   case 2:{proj.direction = vector2d(0, speed * -1); }break;
+			   }
 			   proj.destroyOnCollision = true;
-			   proj.destroyeffect = -1;
-			   proj.aliveFrame = -1;
+			   proj.destroyeffect = effectcol;
+			   projectile->actionFrame = 120;
 			   proj.gravity = false;
 			   proj.destroyOnSurface = false;
-			   proj.stick = 0;
+			   proj.stick = stick;
 			   projectile->sprite = gf2d_sprite_load_all("../images/test/projectile/lemon.png", 8, 5, 1);
 			   slog("lemons");
-			   projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w : self->position.x + self->hitbox.offsetx - 3;
-			   projectile->position.y = self->position.y + self->hitbox.offsety + 7;
+			   projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w : self->position.x + self->hitbox.offsetx - 3 + xpos;
+			   projectile->position.y = self->position.y + self->hitbox.offsety + 9 + ypos;
 			   set_hitbox(projectile, projectile->position.x, projectile->position.y, 8, 5, 0, 0);
 			   projectile->proj_data = proj;
 			   play_soundeffect("../sounds/lemon.wav", 0);
@@ -824,7 +835,7 @@ void create_gungirl_projectile(Entity *self, float speed, float dmg, int type){
 				projectile->flip.x = 1;
 		}
 		projectile->position.x = (dir == 1) ? self->position.x + self->hitbox.offsetx + self->hitbox.w - 7 : self->position.x + self->hitbox.offsetx - 3;
-		projectile->position.y = self->position.y + self->hitbox.offsety - 3;
+		projectile->position.y = self->position.y + self->hitbox.offsety - 7;
 		set_hitbox(projectile, projectile->position.x, projectile->position.y, 31, 30, 0, 0);
 		projectile->proj_data = proj;
 	}break;
@@ -987,7 +998,7 @@ void gungirl_respawn(Entity* self){
 	dy_a = 0;
 	self->frame = 0;
 	self->heldFrame = 0;
-	self->color = vector4d(255, 255, 255, 255);
+	self->color = return_game_controller()->data->coloredit;
 	self->movementspeed = 1;
 	self->dashspeed = 1.5;
 	self->maxjump = 1;

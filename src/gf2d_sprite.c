@@ -1,6 +1,6 @@
 #include <SDL_image.h>
 #include <stdlib.h>
-
+#include <SDL_ttf.h>
 #include "simple_logger.h"
 #include "gfc_text.h"
 
@@ -289,5 +289,4 @@ void gf2d_sprite_draw(
             255);
     }
 }
-
 /*eol@eof*/
